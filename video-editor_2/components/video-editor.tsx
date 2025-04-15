@@ -52,8 +52,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       type: "subtitle",
       icon: <Eye />,
       items: [
-        { id: "subtitle-1", name: "Subtititle 1", position: 10, width: 100, type: "subtitle" },
-        { id: "subtitle-2", name: "Subtititle 2", position: 150, width: 80, type: "subtitle" },
+        { id: "subtitle-1", name: "Subtitle 1", position: 10, width: 100, type: "subtitle" },
+        { id: "subtitle-2", name: "Subtitle 2", position: 150, width: 80, type: "subtitle" },
       ],
     },
     {
