@@ -1,23 +1,39 @@
 import {NextResponse} from "next/server";
 import fsPromises from "fs/promises";
+import ffmpeg from 'fluent-ffmpeg';
+const ffmpeg_static = require('ffmpeg-static');
 
-import {FFmpeg} from "@ffmpeg/ffmpeg";
-import {fetchFile} from "@ffmpeg/util";
-const ffmpeg = new FFmpeg();
-ffmpeg.on("log", () => {});
-ffmpeg.on("progress", () => {});
+// ffmpeg.setFfmpegPath(ffmpeg_static);
+
+// import ffmpegPath from "@ffmpeg-installer/ffmpeg";
+// import ffprobePath from "@ffprobe-installer/ffprobe";
+//
+// ffmpeg.setFfmpegPath(ffmpegPath.path);
+// ffmpeg.setFfprobePath(ffprobePath.path);
 
 export async function GET(req: any, res: any)  {
-    try {
-        await ffmpeg.load();
+    // try {
+    // console.log("Starting...")
 
-        await ffmpeg.exec(["-f", "image2", "-i", "./public/images/generated_image_%1d.png", "./public/output.mp4"]);
-
-        ffmpeg.terminate();
+    ffmpeg()
+        .input('./public/images/generated_image_%1d.png')
+        .frames(3)
+        .outputFPS(0.1)
+        // .on('error', () => {
+        //     console.log("Error occured");
+        // })
+        .on('start', () => {
+            console.log("Compiling...");
+        })
+        .on('end', () => {
+            console.log("Done");
+        })
+        .outputOptions('-pix_fmt yuv420p')
+        .output('./public/output_video.avi').run();
 
         return NextResponse.json({output: "we good"})
-    }
-    catch (error) {
-        return NextResponse.json({output: "we aint good"})
-    }
+    // }
+    // catch (error) {
+    //     return NextResponse.json({output: "we aint good"})
+    // }
 }
