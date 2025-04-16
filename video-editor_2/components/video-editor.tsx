@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { ChevronRight, Scissors, RotateCcw, RotateCw, Eye, Video, Volume, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import AudioPlayer from 'react-h5-audio-player';
 
 interface VideoEditorProps {
   onCancel?: () => void
@@ -42,6 +43,10 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     itemId: null,
   })
 
+  const [is_data_loaded, setDataLoaded] = useState(false)
+  const [resources, setResources] = useState([])
+  const [display_item, setDisplayItem] = useState(null)
+
   // Reference to track containers for position calculations
   const trackRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
 
@@ -52,48 +57,84 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       type: "subtitle",
       icon: <Eye />,
       items: [
-        { id: "subtitle-1", name: "Subtitle 1", position: 10, width: 100, type: "subtitle" },
-        { id: "subtitle-2", name: "Subtitle 2", position: 150, width: 80, type: "subtitle" },
+        // { id: "subtitle-1", name: "Subtitle 1", position: 10, width: 100, type: "subtitle" },
+        // { id: "subtitle-2", name: "Subtitle 2", position: 150, width: 80, type: "subtitle" },
       ],
     },
-    {
-      id: 2,
-      type: "overlay",
-      icon: <Eye />,
-      items: [
-        { id: "overlay-1", name: "overlay.mp4", position: 50, width: 120, type: "overlay" },
-        { id: "overlay-2", name: "overlay2.mp4", position: 200, width: 100, type: "overlay" },
-      ],
-    },
+    // {
+    //   id: 2,
+    //   type: "overlay",
+    //   icon: <Eye />,
+    //   items: [
+    //     { id: "overlay-1", name: "overlay.mp4", position: 50, width: 120, type: "overlay" },
+    //     { id: "overlay-2", name: "overlay2.mp4", position: 200, width: 100, type: "overlay" },
+    //   ],
+    // },
     {
       id: 3,
-      type: "video",
+      type: "image",
       icon: <Eye />,
       items: [
-        { id: "video-1", name: "video_name.mp4", position: 0, width: 150, type: "video" },
-        { id: "video-2", name: "video3.mp4", position: 180, width: 130, type: "video" },
+        // { id: "video-1", name: "video_name.mp4", position: 0, width: 150, type: "video" },
+        // { id: "video-2", name: "video3.mp4", position: 180, width: 130, type: "video" },
       ],
     },
     {
       id: 4,
       type: "audio",
       icon: <Eye />,
-      items: [{ id: "audio-1", name: "audio_1.wav", position: 20, width: 300, type: "audio" }],
+      items: [
+          // { id: "audio-1", name: "audio_1.wav", position: 20, width: 300, type: "audio" }
+      ],
     },
   ])
 
-  // Sample video resources
-  const resources = [
-    { id: 1, name: "video_name.mp4", type: "video" },
-    { id: 2, name: "video3.mp4", type: "video" },
-    { id: 3, name: "video3.mp4", type: "video" },
-    { id: 4, name: "video_name.mp4", type: "video" },
-    { id: 5, name: "video3.mp4", type: "video" },
-    { id: 6, name: "video3.mp4", type: "video" },
-    { id: 7, name: "audio_1.wav", type: "audio" },
-    { id: 8, name: "subtitle.txt", type: "subtitle" },
-    { id: 9, name: "overlay.mp4", type: "overlay" },
-  ]
+  useEffect(() => {
+    const onLoadAssets = async () => {
+      if (is_data_loaded) return;
+
+      const response = await fetch('/api/assets_data', {
+        method: 'GET',
+        headers: {
+          'Content-type': 'application/json'
+        }
+      })
+
+      if (response.ok){
+        const data = await response.json();
+        const resource_array = [];
+        let id = 0;
+        data.output.forEach((e: any) => {
+          resource_array.push({id: id, name:`image_${id}`, source: e.image_url, type: "image"});
+          id++;
+          resource_array.push({id: id, name:`text_${id - 1}`, source: e.script, type: "subtitle"});
+          id++;
+          resource_array.push({id: id, name:`sound_${id - 2}`, source: e.audio_url, type: "audio"});
+          id++;
+        })
+
+        setResources(resource_array)
+        setDataLoaded(true)
+      }
+    }
+
+    onLoadAssets().then()
+
+    return
+  }, [])
+
+  // // Sample video resources
+  // const resources = [
+  //   { id: 1, name: "video_name.mp4", type: "video" },
+  //   { id: 2, name: "video3.mp4", type: "video" },
+  //   { id: 3, name: "video3.mp4", type: "video" },
+  //   { id: 4, name: "video_name.mp4", type: "video" },
+  //   { id: 5, name: "video3.mp4", type: "video" },
+  //   { id: 6, name: "video3.mp4", type: "video" },
+  //   { id: 7, name: "audio_1.wav", type: "audio" },
+  //   { id: 8, name: "subtitle.txt", type: "subtitle" },
+  //   { id: 9, name: "overlay.mp4", type: "overlay" },
+  // ]
 
   // Function to check if two items overlap
   const checkOverlap = (item1: TimelineItem, item2: TimelineItem) => {
@@ -112,19 +153,27 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     if (otherItems.length === 0) return currentPosition
 
     // Check if current position overlaps with any other item
-    const testItem = { ...item, position: currentPosition }
-    const overlappingItem = otherItems.find((other) => checkOverlap(testItem, other))
+    // const overlappingItems = otherItems.filter((other) => checkOverlap(testItem, other))
 
-    if (!overlappingItem) return currentPosition
-
-    // If there's an overlap, position it adjacent to the overlapping item
-    if (currentPosition < overlappingItem.position) {
-      // Position to the left of the overlapping item
-      return overlappingItem.position - item.width
-    } else {
-      // Position to the right of the overlapping item
-      return overlappingItem.position + overlappingItem.width
+    while (true){
+      const testItem = { ...item, position: currentPosition }
+      const overlappingItem = otherItems.find((other) => checkOverlap(testItem, other))
+      if (!overlappingItem){
+        // if (currentPosition < 0){
+        //   otherItems.forEach((e) => {e.position += item.width})
+        // }
+        return currentPosition
+      }
+      // If there's an overlap, position it adjacent to the overlapping item
+      // if (currentPosition < overlappingItem.position) {
+      //   // Position to the left of the overlapping item
+      //   currentPosition = overlappingItem.position - item.width
+      // } else {
+      //   // Position to the right of the overlapping item
+      // }
+      currentPosition = overlappingItem.position + overlappingItem.width
     }
+
   }
 
   // Handle drag start from resources panel
@@ -171,7 +220,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           id: `${resourceData.type}-${Date.now()}`, // Generate unique ID
           name: resourceData.name,
           position: dropPosition,
-          width: Math.floor(Math.random() * 50) + 80, // Random width between 80-130px
+          width: 80, // Random width between 80-130px
           type: resourceData.type,
         }
 
@@ -184,10 +233,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           if (track.id === trackId) {
             // Make sure we're dropping the right type of resource on the right track
             if (
-              (track.type === "video" && resourceData.type === "video") ||
+              (track.type === "image" && resourceData.type === "image") ||
               (track.type === "audio" && resourceData.type === "audio") ||
-              (track.type === "subtitle" && resourceData.type === "subtitle") ||
-              (track.type === "overlay" && resourceData.type === "overlay")
+              (track.type === "subtitle" && resourceData.type === "subtitle")
             ) {
               return {
                 ...track,
@@ -250,6 +298,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     // Reset dragging state
     setIsDraggingTimeline(false)
     setDraggedItemInfo({ trackId: null, itemId: null })
+    // setDraggingItem(null)
   }
 
   // Handle mouse down on timeline items for dragging
@@ -324,6 +373,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const handleMouseUp = () => {
     setIsDraggingTimeline(false)
     setDraggedItemInfo({ trackId: null, itemId: null })
+    setDraggingItem(null)
 
     // Remove event listeners
     document.removeEventListener("mousemove", handleMouseMove)
@@ -371,6 +421,24 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     }
   }, [showContextMenu])
 
+  const loadDataContent = (resource_item) => {
+    setDisplayItem(resource_item)
+  }
+
+  const onExportVideo = async () => {
+    try {
+      const response = await fetch("/api/compile_video", {
+        method: 'GET',
+        headers: {
+          'Content-type' : 'application/json'
+        }
+      })
+
+    } catch (error) {
+
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen">
       {/* Top toolbar */}
@@ -382,7 +450,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             </Button>
           )}
         </div>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button variant="outline" className="flex items-center gap-2" onClick={onExportVideo}>
           Export <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
@@ -406,13 +474,13 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 draggable
                 onDragStart={(e) => handleDragStart(e, resource)}
               >
-                <div className="bg-gray-200 w-full aspect-video rounded mb-1 flex items-center justify-center text-xs">
+                <div className="bg-gray-200 w-full aspect-video rounded mb-1 flex items-center justify-center text-xs" onClick={() => {loadDataContent(resource)}}>
                   {resource.type === "audio" ? (
                     <Volume className="h-4 w-4" />
                   ) : resource.type === "subtitle" ? (
-                    <span className="font-bold">T</span>
+                    <span className="break-words block w-full text-ellipsis whitespace-nowrap overflow-hidden mx-4">{resource.source + "drtfyghdjadsyutaduvhbasjkjidu8asy7tdfuasvhdbkjaoiuy"}</span>
                   ) : (
-                    <Video className="h-4 w-4" />
+                    <img src={resource.source} className="aspect-video scale-75" alt="Image"/>
                   )}
                 </div>
                 <span className="text-xs truncate w-full text-center">{resource.name}</span>
@@ -451,20 +519,27 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         {/* Properties panel */}
         <div className="p-4">
           <h2 className="font-medium text-lg mb-4">Giá trị</h2>
-          {draggingItem && (
-            <div className="p-4 border rounded-md bg-gray-50">
-              <p className="text-sm font-medium">Kéo tài nguyên vào timeline</p>
-              <p className="text-xs text-gray-500 mt-1">Thả vào track tương ứng để thêm vào dự án</p>
-            </div>
-          )}
-          <div className="p-4 border rounded-md bg-gray-50 mt-4">
-            <p className="text-sm font-medium">Hướng dẫn sử dụng</p>
-            <ul className="text-xs text-gray-500 mt-2 space-y-1">
-              <li>• Kéo tài nguyên vào timeline để thêm</li>
-              <li>• Kéo tài nguyên trên timeline để di chuyển</li>
-              <li>• Click chuột phải vào tài nguyên để xóa</li>
-            </ul>
-          </div>
+          { !display_item ?
+            // ({draggingItem ? (
+            //   <div className="p-4 border rounded-md bg-gray-50">
+            //     <p className="text-sm font-medium">Kéo tài nguyên vào timeline</p>
+            //     <p className="text-xs text-gray-500 mt-1">Thả vào track tương ứng để thêm vào dự án</p>
+            //   </div>) : (</>)}
+            (<div className="p-4 border rounded-md bg-gray-50 mt-4">
+              <p className="text-sm font-medium">Hướng dẫn sử dụng</p>
+              <ul className="text-xs text-gray-500 mt-2 space-y-1">
+                <li>• Kéo tài nguyên vào timeline để thêm</li>
+                <li>• Kéo tài nguyên trên timeline để di chuyển</li>
+                <li>• Click chuột phải vào tài nguyên để xóa</li>
+              </ul>
+            </div>) :
+              display_item.type == "subtitle" ? (<textarea defaultValue={display_item.source}></textarea>) :
+              display_item.type == "audio" ? (<AudioPlayer src={display_item.source} onPlay={(e) => {
+                    e.preventDefault();
+                    console.log("onPlay")
+                  }}></AudioPlayer>) :
+              display_item.type == "image" ? (<img src={display_item.source} alt={"Image"} className="w-40"/>) : (<br/>)
+          }
         </div>
       </div>
 

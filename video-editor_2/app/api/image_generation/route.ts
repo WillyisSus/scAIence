@@ -16,9 +16,10 @@ export async function POST(req: { json: () => any; }, res: any) {
         // Set responseModalities to include "Image" so the model can generate  an image
         const response = await ai.models.generateContent({
             model: "gemini-2.0-flash-exp-image-generation",
-            contents: "Create an image about " + prompt,
+            contents: "Give an image representation of this idea: " + prompt,
             config: {
                 responseModalities: [Modality.TEXT, Modality.IMAGE],
+                systemInstruction: "The images have the resolution of 800x600 only. Do not generate any text on the image.",
             },
         });
 

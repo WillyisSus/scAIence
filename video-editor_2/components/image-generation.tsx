@@ -1,6 +1,6 @@
 "use client"
 
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import AudioPlayer from 'react-h5-audio-player';
 import { Button } from "@/components/ui/button"
 
@@ -15,12 +15,32 @@ interface ImageItem{
     audio_url: string,
 }
 
-export default function ImageGeneration({onConfirmImages} : ImageGenerationProps){
-    const [assets, setAssets] = useState<ImageItem[]>([
-        {asset_id: 0, image_url: "images/generated_image_0.png", script: "An apple", audio_url: "sounds/output.mp3"},
-        {asset_id: 1, image_url: "images/generated_image_1.png", script: "A pineapple", audio_url: "sounds/output.mp3"},
-        {asset_id: 2, image_url: "images/generated_image_2.png", script: "Grapes", audio_url: "sounds/output.mp3"}
-    ])
+export default function ImageGeneration({onConfirmImages}: ImageGenerationProps) {
+    const [assets, setAssets] = useState<ImageItem[]>([])
+    const [is_data_loaded, setDataLoaded] = useState(false)
+
+    useEffect(() => {
+        const onLoadAssets = async () => {
+            if (is_data_loaded) return;
+
+            const response = await fetch('/api/assets_data', {
+                method: 'GET',
+                headers: {
+                    'Content-type': 'application/json'
+                }
+            })
+
+            if (response.ok){
+                const data = await response.json();
+                setAssets(data.output);
+                setDataLoaded(true)
+            }
+        }
+
+        onLoadAssets().then()
+
+        return
+    }, [])
 
     return (
         <div className="container mx-auto py-8 px-4">

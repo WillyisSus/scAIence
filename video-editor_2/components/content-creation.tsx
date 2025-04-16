@@ -1,7 +1,7 @@
 "use client"
 import {ChevronDown, Play, Plus} from "lucide-react"
 import {Button} from "@/components/ui/button"
-import {useState, useEffect} from "react";
+import {useState} from "react";
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 
@@ -26,10 +26,11 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
   const [progress, setProgress] = useState("")
 
   const [assets, setAssets] = useState<ImageItem[]>([
-    {asset_id: 0, image_url: "", script: "An apple", audio_url: "sounds/output.mp3"},
-    {asset_id: 1, image_url: "", script: "A pineapple", audio_url: "sounds/output.mp3"},
-    {asset_id: 2, image_url: "", script: "Grapes", audio_url: "sounds/output.mp3"}
+    {asset_id: 0, image_url: "", script: "An apple", audio_url: "sounds/output.mp3"}
+    // {asset_id: 1, image_url: "", script: "A pineapple", audio_url: "sounds/output.mp3"},
+    // {asset_id: 2, image_url: "", script: "Grapes", audio_url: "sounds/output.mp3"}
   ])
+
 
   const onGenerateContent = async () => {
     let promptArea = document.getElementById("my-text-area")
@@ -138,10 +139,20 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
         })
 
         if (voice_response.ok){
-          s.audio_url = "sounds/generated_voice_" + s.asset_id + ".png"
+          s.audio_url = "sounds/generated_voice_" + s.asset_id + ".mp3"
         }
-
       }
+
+      setProgress("Saving data...")
+      await fetch('/api/assets_data',{
+        method: 'POST',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          my_assets: assets
+        })
+      })
     }
     catch (error) {
 
