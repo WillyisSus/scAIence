@@ -16,9 +16,9 @@ export async function GET(req: any, res: any)  {
     // console.log("Starting...")
 
     ffmpeg()
-        .input('./public/images/generated_image_%1d.png')
-        .frames(3)
-        .outputFPS(0.1)
+        .input('./public/images/generated_image_%d.png')
+        .inputFPS(0.1)
+        .outputFPS(1)
         // .on('error', () => {
         //     console.log("Error occured");
         // })
@@ -28,7 +28,7 @@ export async function GET(req: any, res: any)  {
         .on('end', () => {
             console.log("Done");
         })
-        .outputOptions('-pix_fmt yuv420p')
+        .outputOptions(['-pix_fmt yuv420p'])
         .output('./public/output_video.avi').run();
 
         return NextResponse.json({output: "we good"})
