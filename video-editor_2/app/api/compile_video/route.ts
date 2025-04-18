@@ -1,5 +1,5 @@
 import {NextResponse} from "next/server";
-import {readdir} from "fs/promises";
+import {readdir, unlink} from "fs/promises";
 import ffmpeg from 'fluent-ffmpeg';
 import path from "node:path";
 const ffmpeg_static = require('ffmpeg-static');
@@ -133,6 +133,14 @@ export async function GET(req: any, res: any) {
                     })
                     .run()
             })
+        }
+    }
+    for (const input of inputs) {
+        try {
+            await unlink(input)
+            console.log(`File temp ${input} deleted`);
+        } catch(e) {
+            console.log('Error deleting files:', e);
         }
     }
     return NextResponse.json({output: "we good"})
