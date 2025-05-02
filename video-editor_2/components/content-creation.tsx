@@ -22,6 +22,9 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
   const [scriptOutput, setScriptOutput] = useState("")
   const [scriptInput, setScriptInput] = useState("")
   const [progress, setProgress] = useState("")
+  const [scriptVibe, setScriptVibe] = useState("Casual")
+  const [imageVibe, setImageVibe] = useState("Realistic")
+  const [voiceLanguage, setVoiceLanguage] = useState("en")
 
   const [assets, setAssets] = useState<ImageItem[]>([
     // {asset_id: 0, image_url: "", script: "An apple", audio_url: "sounds/output.mp3"}
@@ -42,7 +45,10 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
           headers: {
             'Content-type': 'application/json'
           },
-          body: JSON.stringify({body: scriptInput})
+          body: JSON.stringify({
+            script: scriptInput,
+            vibe: scriptVibe,
+          })
         })
 
         let data = await response.json()
@@ -115,6 +121,8 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
       console.log(temp_array);
       // console.log(assets);
 
+
+
       if (temp_array.length === 0) return;
 
       for (const s of temp_array){
@@ -126,7 +134,8 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
           },
           body: JSON.stringify({
             prompt_data: s.script,
-            prompt_index: s.asset_id
+            prompt_index: s.asset_id,
+            prompt_style: imageVibe
           })
         })
 
@@ -177,16 +186,16 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
           <div className="border rounded-lg p-6">
             <h2 className="text-xl font-bold mb-6">Tùy chỉnh kịch bản</h2>
             <div className="mb-6">
-              <label className="block mb-2 font-medium">Chọn chủ đề tạo</label>
+              <label className="block mb-2 font-medium">Nhập chủ đề tạo</label>
               <div className="flex gap-4">
-                <div className="relative w-full">
-                  <select className="w-full p-2 border rounded appearance-none pr-10">
-                    <option>Thú cưng</option>
-                    <option>Du lịch</option>
-                    <option>Công nghệ</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
-                </div>
+                {/*<div className="relative w-full">*/}
+                {/*<select className="w-full p-2 border rounded appearance-none pr-10">*/}
+                {/*  <option>Thú cưng</option>*/}
+                {/*  <option>Du lịch</option>*/}
+                {/*  <option>Công nghệ</option>*/}
+                {/*</select>*/}
+                {/*<ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />*/}
+                {/*</div>*/}
                 <div className="w-full">
                   <input
                       type="text"
@@ -203,16 +212,18 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
             <div className="mb-6">
               <label className="block mb-2 font-medium">Phong cách</label>
               <div className="relative w-full">
-                <select className="w-full p-2 border rounded appearance-none pr-10">
-                  <option>Phổ thông</option>
-                  <option>Hài hước</option>
-                  <option>Chính thống</option>
+                <select className="w-full p-2 border rounded appearance-none pr-10" onChange={event => setScriptVibe(event.target.value)} value={scriptVibe}>
+                  <option value={"Casual"}>Phổ thông</option>
+                  <option value={"Comical"}>Hài hước</option>
+                  <option value={"Serious"}>Nghiêm túc</option>
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
+                <ChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"/>
               </div>
             </div>
 
-            <Button id="prompt-button" className="w-full bg-black text-white" onClick={onGenerateContent}>Tạo kịch bản</Button>
+            <Button id="prompt-button" className="w-full bg-black text-white" onClick={onGenerateContent}>Tạo kịch
+              bản</Button>
 
             <h2 className="text-xl font-bold my-6">Tùy chỉnh âm thanh</h2>
 
@@ -220,57 +231,46 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
               <label className="block mb-2 font-medium">Ngôn ngữ</label>
               <div className="flex gap-4 items-center">
                 <div className="relative w-full">
-                  <select className="w-full p-2 border rounded appearance-none pr-10">
-                    <option>Tiếng Anh</option>
-                    <option>Tiếng Việt</option>
+                  <select className="w-full p-2 border rounded appearance-none pr-10" onChange={event => setVoiceLanguage(event.target.value)}>
+                    <option value={"en"}>Tiếng Anh</option>
+                    <option value={"vi"}>Tiếng Việt</option>
+                    <option value={"jp"}>Tiếng Nhật</option>
+                    <option value={"cn"}>Tiếng Trung</option>
+                    <option value={"kr"}>Tiếng Hàn</option>
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
+                  <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"/>
                 </div>
-                <div className="relative w-full">
-                  <select className="w-full p-2 border rounded appearance-none pr-10">
-                    <option>Nam, người lớn</option>
-                    <option>Nữ, người lớn</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
-                </div>
-                <Button variant="ghost" className="flex items-center gap-1">
-                  <Plus className="h-4 w-4" />
-                  Thêm giọng nói
-                </Button>
+                {/*<div className="relative w-full">*/}
+                {/*  <select className="w-full p-2 border rounded appearance-none pr-10">*/}
+                {/*    <option>Nam, người lớn</option>*/}
+                {/*    <option>Nữ, người lớn</option>*/}
+                {/*  </select>*/}
+                {/*  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />*/}
+                {/*</div>*/}
+                {/*<Button variant="ghost" className="flex items-center gap-1">*/}
+                {/*  <Plus className="h-4 w-4" />*/}
+                {/*  Thêm giọng nói*/}
+                {/*</Button>*/}
               </div>
             </div>
 
+            <h2 className="text-xl font-bold my-6">Tùy chỉnh hình ảnh</h2>
+
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div>
-                <label className="block mb-2 font-medium">Tốc độ đọc</label>
+                <label className="block mb-2 font-medium">Phong cách</label>
                 <div className="relative w-full">
-                  <select className="w-full p-2 border rounded appearance-none pr-10">
-                    <option>1.0x</option>
-                    <option>1.5x</option>
-                    <option>2.0x</option>
+                  <select className="w-full p-2 border rounded appearance-none pr-10" onChange={event => setImageVibe(event.target.value)}>
+                    <option value={"Realistic"}>Hiện thực</option>
+                    <option value={"Cartoon"}>Hoạt hình</option>
+                    <option value={"Painting"}>Tranh vẽ</option>
+                    <option value={"Journalistic"}>Báo chí</option>
+                    <option value={"Classical"}>Cổ điển</option>
+                    <option value={"Historical"}>Lịch sử</option>
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
-                </div>
-              </div>
-              <div>
-                <label className="block mb-2 font-medium">Âm điệu</label>
-                <div className="relative w-full">
-                  <select className="w-full p-2 border rounded appearance-none pr-10">
-                    <option>Vui nhộn</option>
-                    <option>Nghiêm túc</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
-                </div>
-              </div>
-              <div>
-                <label className="block mb-2 font-medium">Cường độ</label>
-                <div className="relative w-full">
-                  <select className="w-full p-2 border rounded appearance-none pr-10">
-                    <option>100%</option>
-                    <option>75%</option>
-                    <option>50%</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
+                  <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"/>
                 </div>
               </div>
             </div>
@@ -282,8 +282,11 @@ export default function ContentCreation({onApproveAndCreate, onCancel}: ContentC
           <div className="flex flex-col gap-6">
             <div className="border rounded-lg p-6">
               <h2 className="text-xl font-bold mb-4">Kịch bản được tạo</h2>
-              <textarea id="my-text-area" className="w-full bg-gray-100 p-4 rounded-lg h-96 overflow-y-auto text-sm" readOnly={false} value={scriptOutput} onChange={(event) => {event.target.nodeValue !== null ? setScriptOutput(event.target.nodeValue) : null}}>
-            </textarea>
+              <textarea id="my-text-area" className="w-full bg-gray-100 p-4 rounded-lg h-96 overflow-y-auto text-sm"
+                        readOnly={false} value={scriptOutput} onChange={(event) => {
+                setScriptOutput(event.target.value)
+              }}>
+              </textarea>
             </div>
 
             {/*<div className="border rounded-lg p-6">*/}

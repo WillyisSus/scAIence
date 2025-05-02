@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Plus, Trash2 } from "lucide-react"
+import {Check, ChevronDown, Plus, Trash2} from "lucide-react"
 import { Button } from "@/components/ui/button"
+import ReactModal from "react-modal"
+
 
 interface DashboardProps {
   onCreateVideo: () => void
@@ -10,6 +12,10 @@ interface DashboardProps {
 
 export default function Dashboard({ onCreateVideo }: DashboardProps) {
   const [selectedVideos, setSelectedVideos] = useState<string[]>([])
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const handleClose = () => setShowCreateModal(false);
+  const handleShow = () => setShowCreateModal(true);
 
   const videos = [
     {
@@ -56,7 +62,7 @@ export default function Dashboard({ onCreateVideo }: DashboardProps) {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
-          <Button variant="default" className="flex items-center gap-2 bg-black text-white" onClick={onCreateVideo}>
+          <Button variant="default" className="flex items-center gap-2 bg-black text-white" onClick={handleShow}>
             <Plus className="h-5 w-5" />
             Tạo video
           </Button>
@@ -137,63 +143,104 @@ export default function Dashboard({ onCreateVideo }: DashboardProps) {
         </div>
 
         <div className="h-64 relative">
-          {/* Simplified chart representation */}
-          <div className="absolute inset-0 flex items-end">
-            <div className="w-full h-full relative">
-              {/* Red line (Youtube) */}
-              <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path
-                  d="M0,80 L10,85 L20,75 L30,80 L40,50 L50,90 L60,70 L70,30 L80,40 L90,50 L100,60"
-                  fill="none"
-                  stroke="red"
-                  strokeWidth="1"
-                />
-              </svg>
+           {/*Simplified chart representation*/}
+          {/*<div className="absolute inset-0 flex items-end">*/}
+          {/*  <div className="w-full h-full relative">*/}
+          {/*    /!* Red line (Youtube) *!/*/}
+          {/*    <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">*/}
+          {/*      <path*/}
+          {/*        d="M0,80 L10,85 L20,75 L30,80 L40,50 L50,90 L60,70 L70,30 L80,40 L90,50 L100,60"*/}
+          {/*        fill="none"*/}
+          {/*        stroke="red"*/}
+          {/*        strokeWidth="1"*/}
+          {/*      />*/}
+          {/*    </svg>*/}
 
-              {/* Black line (Tiktok) */}
-              <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path
-                  d="M0,90 L10,70 L20,50 L30,40 L40,20 L50,60 L60,60 L70,20 L80,10 L90,40 L100,20"
-                  fill="none"
-                  stroke="black"
-                  strokeWidth="1"
-                />
-              </svg>
+          {/*    /!* Black line (Tiktok) *!/*/}
+          {/*    <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">*/}
+          {/*      <path*/}
+          {/*        d="M0,90 L10,70 L20,50 L30,40 L40,20 L50,60 L60,60 L70,20 L80,10 L90,40 L100,20"*/}
+          {/*        fill="none"*/}
+          {/*        stroke="black"*/}
+          {/*        strokeWidth="1"*/}
+          {/*      />*/}
+          {/*    </svg>*/}
 
-              {/* Blue line (Facebook) */}
-              <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path
-                  d="M0,95 L10,80 L20,80 L30,80 L40,90 L50,90 L60,90 L70,60 L80,40 L90,80 L100,90"
-                  fill="none"
-                  stroke="blue"
-                  strokeWidth="1"
-                />
-              </svg>
-            </div>
-          </div>
+          {/*    /!* Blue line (Facebook) *!/*/}
+          {/*    <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">*/}
+          {/*      <path*/}
+          {/*        d="M0,95 L10,80 L20,80 L30,80 L40,90 L50,90 L60,90 L70,60 L80,40 L90,80 L100,90"*/}
+          {/*        fill="none"*/}
+          {/*        stroke="blue"*/}
+          {/*        strokeWidth="1"*/}
+          {/*      />*/}
+          {/*    </svg>*/}
+          {/*  </div>*/}
+          {/*</div>*/}
 
-          {/* X-axis labels */}
-          <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500">
-            <div>15/03</div>
-            <div>16/03</div>
-            <div>17/03</div>
-            <div>18/03</div>
-            <div>19/03</div>
-            <div>20/03</div>
-            <div>21/03</div>
-            <div>22/03</div>
-            <div>23/03</div>
-            <div>24/03</div>
-          </div>
+          {/*/!* X-axis labels *!/*/}
+          {/*<div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500">*/}
+          {/*  <div>15/03</div>*/}
+          {/*  <div>16/03</div>*/}
+          {/*  <div>17/03</div>*/}
+          {/*  <div>18/03</div>*/}
+          {/*  <div>19/03</div>*/}
+          {/*  <div>20/03</div>*/}
+          {/*  <div>21/03</div>*/}
+          {/*  <div>22/03</div>*/}
+          {/*  <div>23/03</div>*/}
+          {/*  <div>24/03</div>*/}
+          {/*</div>*/}
 
-          {/* Y-axis labels */}
-          <div className="absolute top-0 right-0 bottom-0 flex flex-col justify-between items-end text-xs text-gray-500">
-            <div>15</div>
-            <div>10</div>
-            <div>5</div>
-            <div>0</div>
-          </div>
+          {/*/!* Y-axis labels *!/*/}
+          {/*<div className="absolute top-0 right-0 bottom-0 flex flex-col justify-between items-end text-xs text-gray-500">*/}
+          {/*  <div>15</div>*/}
+          {/*  <div>10</div>*/}
+          {/*  <div>5</div>*/}
+          {/*  <div>0</div>*/}
+          {/*</div>*/}
         </div>
+        <ReactModal isOpen={showCreateModal} ariaHideApp={false}>
+          {/*<Modal.Header closeButton>*/}
+          {/*  <Modal.Title>Create a New Project</Modal.Title>*/}
+          {/*</Modal.Header>*/}
+          {/*<Modal.Body>*/}
+
+          {/*</Modal.Body>*/}
+          {/*<Modal.Footer>*/}
+          <input
+              type="text"
+              placeholder="Nhập tên của project"
+              className="w-full p-2 border rounded m-2"
+              id="my-prompt"
+              value={""}
+              onChange={event => null}
+          />
+
+          <div className="relative w-full">
+            <select className="w-full p-2 m-2 border rounded appearance-none">
+              <option>Tiếng Anh</option>
+              <option>Tiếng Trung</option>
+              <option>Tiếng Việt</option>
+              <option>Tiếng Hàn</option>
+              <option>...</option>
+
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"/>
+          </div>
+
+          <div className="w-full justify-end flex">
+            <Button onClick={handleClose} className="p-3 m-2">
+              Đóng
+            </Button>
+            <Button onClick={onCreateVideo} className="p-3 m-2">
+              Tạo
+            </Button>
+          </div>
+          {/*</Modal.Footer>*/}
+        </ReactModal>
+
+
       </div>
     </div>
   )
