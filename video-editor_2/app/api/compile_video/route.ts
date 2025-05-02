@@ -34,9 +34,10 @@ export async function GET(req: any, res: any) {
     if (imageCount === 0 || voiceCount === 0 || imageCount != voiceCount) {
         return NextResponse.json({output: "we not good"})
     }
+    console.log(imageCount)
 
-    for (let i = 0; i <= imageCount; i++) {
-        if (i < imageCount) {
+    for (let i = 1; i <= imageCount; i++) {
+        // if (i <= imageCount) {
             await new Promise<void>((resolve, reject) => {
                 ffmpeg()
                     .input(`./public/images/generated_image_${i}.png`)
@@ -50,91 +51,97 @@ export async function GET(req: any, res: any) {
                     .fps(fps)
                     .audioFrequency(sampleRate)
                     .on('start', () => {
-                        console.log(`Compiling... ${i}`)
+                        console.log(`Compiling at ${i}`)
                     })
                     .on('end', () => {
                         console.log(`Done ${i}`)
                         resolve()
                     })
-                    .on('error', () => {
-                        console.log(`Error occured ${i}`)
-                        reject()
-                    })
+                    // .on('error', () => {
+                    //     console.log(`Error occur at ${i}`)
+                    //     reject()
+                    // })
                     .run()
             })
-        } else {
-            const publicList = await readdir('./public')
-            const videos = publicList.filter(video => /^output_video_\d+\.mp4$/.test(video))
-            const videoCount = videos.length
-            if (videoCount === 0 || videoCount != imageCount) {
-                console.log('no video found')
-                return NextResponse.json({output: "we not good too"})
-            }
-            videos.forEach((video, index) => {
-                inputs.push(`./public/${video}`)
-                // filters.push({
-                //     filter: 'scale',
-                //     options: {w: resX, h: resY, force_original_aspect_ratio: 'decrease'},
-                //     inputs: `${index}:v`,
-                //     outputs: `v${index}_scaled`
-                // })
-                // filters.push({
-                //     filter: 'pad',
-                //     options: {w: resX, h: resY, x: '(ow-iw)/2', y: '(oh-ih)/2', color: 'black'},
-                //     inputs: `v${index}_scaled`,
-                //     outputs: `v${index}`
-                // })
-                // filters.push({
-                //     filter: 'aresample',
-                //     options: 'async=1',
-                //     inputs: `${index}:a`,
-                //     outputs: `a${index}`
-                // });
-            })
-            let concatFilter: {
-                filter: string;
-                options: { n: number; v: number; a: number };
-                inputs: string[];
-                outputs: string[];
-            } = {
-                filter: 'concat',
-                options: { n: videoCount, v: 1, a: 1 },
-                inputs: [],
-                outputs: ['v', 'a']
-            }
-            for (let i = 0; i < videoCount; i++) {
-                concatFilter.inputs.push(`${i}:v`)
-                concatFilter.inputs.push(`${i}:a`)
-            }
-            filters.push(concatFilter)
-            await new Promise<void>((resolve, reject) => {
-                const ff = ffmpeg()
-                inputs.forEach((input) => {
-                    ff.input(input)
-                })
-                ff
-                    .complexFilter(filters)
-                    .outputOptions(['-map [v]', '-map [a]', '-pix_fmt yuv420p', `-crf ${crf}`, `-preset ${preset}`])
-                    .output('./public/output_video.mp4')
-                    .videoCodec(videoEncode)
-                    .audioCodec(audioEncode)
-                    .fps(fps)
-                    .audioFrequency(sampleRate)
-                    .on('start', () => {
-                        console.log("Compiling...")
-                    })
-                    .on('end', () => {
-                        console.log(`Done `)
-                        resolve()
-                    })
-                    .on('error', () => {
-                        console.log(`Error occured `)
-                        reject()
-                    })
-                    .run()
-            })
-        }
+        // }
+        // else {
+        //
+        // }
+        //
+
     }
+
+    const publicList = await readdir('./public')
+    const videos = publicList.filter(video => /^output_video_\d+\.mp4$/.test(video))
+    const videoCount = videos.length
+    if (videoCount === 0 || videoCount != imageCount) {
+        console.log('no video found')
+        return NextResponse.json({output: "we not good too"})
+    }
+    videos.forEach((video, index) => {
+        inputs.push(`./public/${video}`)
+        // filters.push({
+        //     filter: 'scale',
+        //     options: {w: resX, h: resY, force_original_aspect_ratio: 'decrease'},
+        //     inputs: `${index}:v`,
+        //     outputs: `v${index}_scaled`
+        // })
+        // filters.push({
+        //     filter: 'pad',
+        //     options: {w: resX, h: resY, x: '(ow-iw)/2', y: '(oh-ih)/2', color: 'black'},
+        //     inputs: `v${index}_scaled`,
+        //     outputs: `v${index}`
+        // })
+        // filters.push({
+        //     filter: 'aresample',
+        //     options: 'async=1',
+        //     inputs: `${index}:a`,
+        //     outputs: `a${index}`
+        // });
+    })
+    let concatFilter: {
+        filter: string;
+        options: { n: number; v: number; a: number };
+        inputs: string[];
+        outputs: string[];
+    } = {
+        filter: 'concat',
+        options: { n: videoCount, v: 1, a: 1 },
+        inputs: [],
+        outputs: ['v', 'a']
+    }
+    for (let i = 0; i < videoCount; i++) {
+        concatFilter.inputs.push(`${i}:v`)
+        concatFilter.inputs.push(`${i}:a`)
+    }
+    filters.push(concatFilter)
+    await new Promise<void>((resolve, reject) => {
+        const ff = ffmpeg()
+        inputs.forEach((input) => {
+            ff.input(input)
+        })
+        ff
+            .complexFilter(filters)
+            .outputOptions(['-map [v]', '-map [a]', '-pix_fmt yuv420p', `-crf ${crf}`, `-preset ${preset}`])
+            .output('./public/output_video.mp4')
+            .videoCodec(videoEncode)
+            .audioCodec(audioEncode)
+            .fps(fps)
+            .audioFrequency(sampleRate)
+            .on('start', () => {
+                console.log("Compiling...")
+            })
+            .on('end', () => {
+                console.log(`Done `)
+                resolve()
+            })
+            .on('error', () => {
+                console.log(`Error occured `)
+                reject()
+            })
+            .run()
+    })
+
     for (const input of inputs) {
         try {
             await unlink(input)
