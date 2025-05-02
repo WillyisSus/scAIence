@@ -28,15 +28,13 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
 
         const custom_url = `sounds/custom_audio_${selectedAssetId}.webm`
 
+        // Update assets
         const updatedAssets = assets.map((asset) =>
             asset.asset_id === selectedAssetId
-                ? { ...asset, custom_audio: tempAudioBlob, custom_audio_url: custom_url }
+                ? { ...asset, custom_audio: tempAudioBlob, custom_audio_url: custom_url, audio_version: Date.now() }
                 : asset
         )
 
-        setAssets(updatedAssets)
-
-        // Update assets
         const saveAssets = updatedAssets.map(({ custom_audio, ...rest }) => rest)
         await fetch('/api/assets_data', {
             method: 'POST',
@@ -56,6 +54,7 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
             body: formData,
         });
 
+        setAssets(updatedAssets)
         setShowAudioModal(false)
         setTempAudioBlob(null)
     }

@@ -18,6 +18,7 @@ interface ImageItem {
     // Support upload/record audio    
     custom_audio?: File | Blob,
     custom_audio_url?: string,
+    audio_version?: number
 }
 
 export default function ImageGeneration({ onConfirmImages }: ImageGenerationProps) {
@@ -47,15 +48,18 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
                 setDataLoaded(true)
             }
         }
-
         onLoadAssets().then()
-
         return
     }, [])
 
     return (
         <div className="container mx-auto py-8 px-4">
-            {assets.map((asset) => (
+            {assets.map((asset) => {
+            
+                console.log("Current")
+                console.log(asset)
+
+                return (
                 <div key={asset.asset_id} className="border rounded-lg p-6">
                     <div className="bg-white w-full rounded mb-1 flex items-center justify-center text-xs">
                         <div className="grid grid-flow-row w-full gap-4">
@@ -64,10 +68,14 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
                                 <div className="items-center grid grid-rows-2 col-span-3">
                                     <textarea readOnly={true} defaultValue={asset.script}
                                         className="h-full text-base"></textarea>
-                                    <AudioPlayer src={asset.custom_audio_url ? asset.custom_audio_url : asset.audio_url} onPlay={(e) => {
-                                        e.preventDefault();
-                                        console.log("onPlay")
-                                    }}></AudioPlayer>
+                                    <AudioPlayer 
+                                        key={asset.audio_version || 0}
+                                        src={asset.custom_audio_url || asset.audio_url} 
+                                        onPlay={(e) => {
+                                            e.preventDefault();
+                                            console.log("onPlay")
+                                        }}>
+                                    </AudioPlayer>
                                 </div>
                             </div>
                             <div className="w-full">
@@ -91,7 +99,8 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
                         </div>
                     </div>
                 </div>
-            ))}
+            )})}
+
             {/* Support upload/record audio */}
             <AudioReplaceModal
                 showAudioModal={showAudioModal}
