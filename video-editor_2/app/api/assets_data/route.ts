@@ -1,31 +1,31 @@
-import {NextResponse} from "next/server";
+import { NextResponse } from "next/server";
 import fsPromises from 'fs/promises';
 
-export async function POST(req: { json: () => any; }, res: any)  {
+export async function POST(req: { json: () => any; }, res: any) {
     try {
         const data = await req.json();
 
-        const assets_data = data.my_assets;
-        let save_data = JSON.stringify(assets_data);
+        const save_data = JSON.stringify(data);
+
         await fsPromises.writeFile("public/assets_data.json", save_data);
 
-        return NextResponse.json({output: "we good"})
+        return NextResponse.json({ output: "we good" })
     }
     catch (error) {
-        return NextResponse.json({output: "we aint good"})
+        return NextResponse.json({ output: "we aint good" })
     }
 }
 
-export async function GET(req: { json: () => any; }, res: any)  {
+export async function GET(req: { json: () => any; }, res: any) {
     try {
 
-        let save_data = await fsPromises.readFile("public/assets_data.json");
+        const save_data = await fsPromises.readFile("public/assets_data.json");
         // @ts-ignore
-        let assets_data = JSON.parse(save_data);
+        const assets_data = JSON.parse(save_data);
 
-        return NextResponse.json({output: assets_data})
+        return NextResponse.json(assets_data)
     }
     catch (error) {
-        return NextResponse.json({output: "we aint good"})
+        return NextResponse.json({ output: "we aint good" })
     }
 }
