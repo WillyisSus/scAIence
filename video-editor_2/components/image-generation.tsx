@@ -24,6 +24,7 @@ interface ImageItem {
 export default function ImageGeneration({ onConfirmImages }: ImageGenerationProps) {
     const [assets, setAssets] = useState<ImageItem[]>([])
     const [is_data_loaded, setDataLoaded] = useState(false)
+    const [progress, setProgress] = useState("")
 
     // Support upload/record audio
     const [showAudioModal, setShowAudioModal] = useState(false)
@@ -87,6 +88,23 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
         }
     }
 
+    const generatePreview = async () => {
+        setProgress("Đang tạo bản xem trước...")
+        try {
+            const response = await fetch("/api/compile_video", {
+                method: 'GET',
+                headers: {
+                    'Content-type' : 'application/json'
+                }
+            })
+            setProgress("Hoàn thành! Đang chuyển hướng...")
+            return true;
+        } catch (error) {
+            setProgress("Tạo bản xem trước thất bại")
+            return false;
+        }
+    }
+
     return (
         <div className="container mx-auto py-8 px-4">
             {assets.map((asset) => {
@@ -144,13 +162,15 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
                 setAssets={setAssets}
                 assets={assets}
             />
-            <div className="w-full flex items-end justify-end">
+            <div className="w-full flex items-end justify-end my-4">
+                <span className="text-center justify-self-center content-center">{progress}</span>
                 <Button variant="outline" className="bg-black text-white px-6" onClick={async event => {
                     event.preventDefault();
                     await saveResources();
-                    onConfirmImages();
+                    let result = await generatePreview();
+                    if (result) onConfirmImages();
                 }}>
-                    Xác nhận thay đổi
+                    Xác nhận thay đổi và tạo bản xem trước
                 </Button>
                 <Button variant="outline" className="bg-red-600 text-white px-6">
                     Hủy thay đổi

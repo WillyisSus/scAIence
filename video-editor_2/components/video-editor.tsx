@@ -59,36 +59,19 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       id: 1,
       type: "subtitle",
       icon: <Eye />,
-      items: [
-        // { id: "subtitle-1", name: "Subtitle 1", position: 10, width: 100, type: "subtitle" },
-        // { id: "subtitle-2", name: "Subtitle 2", position: 150, width: 80, type: "subtitle" },
-      ],
+      items: [],
     },
-    // {
-    //   id: 2,
-    //   type: "overlay",
-    //   icon: <Eye />,
-    //   items: [
-    //     { id: "overlay-1", name: "overlay.mp4", position: 50, width: 120, type: "overlay" },
-    //     { id: "overlay-2", name: "overlay2.mp4", position: 200, width: 100, type: "overlay" },
-    //   ],
-    // },
     {
       id: 3,
       type: "image",
       icon: <Eye />,
-      items: [
-        // { id: "video-1", name: "video_name.mp4", position: 0, width: 150, type: "video" },
-        // { id: "video-2", name: "video3.mp4", position: 180, width: 130, type: "video" },
-      ],
+      items: [],
     },
     {
       id: 4,
       type: "audio",
       icon: <Eye />,
-      items: [
-          // { id: "audio-1", name: "audio_1.wav", position: 20, width: 300, type: "audio" }
-      ],
+      items: [],
     },
   ])
 
@@ -108,6 +91,61 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         const resource_array = data.output;
 
         setResources(resource_array);
+        let timeLineSubtitles = [];
+        let timeLineImages = [];
+        let timeLineAudio = [];
+
+        resource_array.forEach(items => {
+          if (items.type === "subtitle"){
+            timeLineSubtitles.push({
+              id: timeLineSubtitles.length + 1,
+              name: items.name,
+              position: timeLineSubtitles.length * 80,
+              width: 80,
+              type: "subtitle"
+            })
+          }
+          else if (items.type === "image"){
+            timeLineImages.push({
+              id: timeLineImages.length + 1,
+              name: items.name,
+              position: timeLineImages.length * 80,
+              width: 80,
+              type: "subtitle"
+            })
+          }
+          else if (items.type === "audio"){
+            timeLineAudio.push({
+              id: timeLineAudio.length + 1,
+              name: items.name,
+              position: timeLineAudio.length * 80,
+              width: 80,
+              type: "subtitle"
+            })
+          }
+        })
+
+        setTracks([
+          {
+            id: 1,
+            type: "subtitle",
+            icon: <Eye />,
+            items: timeLineSubtitles,
+          },
+          {
+            id: 3,
+            type: "image",
+            icon: <Eye />,
+            items: timeLineImages,
+          },
+          {
+            id: 4,
+            type: "audio",
+            icon: <Eye />,
+            items: timeLineAudio,
+          }]
+        );
+
         setDataLoaded(true)
       }
     }
@@ -144,7 +182,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     const otherItems = track.items.filter((i) => i.id !== item.id)
 
     // If no other items, return the current position
-    if (otherItems.length === 0) return currentPosition
+    if (otherItems.length === 0) return 0;
 
     // Check if current position overlaps with any other item
     // const overlappingItems = otherItems.filter((other) => checkOverlap(testItem, other))
@@ -156,15 +194,10 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         // if (currentPosition < 0){
         //   otherItems.forEach((e) => {e.position += item.width})
         // }
-        return currentPosition
+        let dropLocation = 0;
+        otherItems.forEach((item) => {dropLocation += item.width});
+        return dropLocation;
       }
-      // If there's an overlap, position it adjacent to the overlapping item
-      // if (currentPosition < overlappingItem.position) {
-      //   // Position to the left of the overlapping item
-      //   currentPosition = overlappingItem.position - item.width
-      // } else {
-      //   // Position to the right of the overlapping item
-      // }
       currentPosition = overlappingItem.position + overlappingItem.width
     }
 
@@ -183,6 +216,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     setTimeout(() => {
       document.body.removeChild(ghostElement)
     }, 0)
+
+
+    console.log("Dragging 1")
   }
 
   // Handle drag over on timeline tracks
@@ -318,6 +354,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     // Add event listeners for mouse move and mouse up
     document.addEventListener("mousemove", handleMouseMove)
     document.addEventListener("mouseup", handleMouseUp)
+    console.log(trackId + " " + itemId)
   }
 
   // Handle mouse move during timeline item drag
@@ -387,9 +424,15 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     if (selectedItem.trackId !== null && selectedItem.itemId !== null) {
       const updatedTracks = tracks.map((track) => {
         if (track.id === selectedItem.trackId) {
+          let temp = track.items.filter((item) => item.id !== selectedItem.itemId);
+          let track_length = 0;
+          for (let i = 0; i < temp.length; i++){
+            temp[i].position = track_length;
+            track_length += temp[i].width;
+          }
           return {
             ...track,
-            items: track.items.filter((item) => item.id !== selectedItem.itemId),
+            items: temp,
           }
         }
         return track
@@ -493,30 +536,29 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         <div className="border-r p-4">
           <h2 className="font-medium text-lg mb-4">Trình phát</h2>
 
-          <ReactPlayer url={"project2/output_video.mp4"} width="100%"/>
 
-          {/*<div className="flex flex-col h-[calc(100%-6rem)]">*/}
-          {/*  <div className="flex-1 bg-gray-100 rounded-md mb-4"></div>*/}
-          {/*  <div className="flex justify-between items-center">*/}
-          {/*    <div className="flex gap-2">*/}
-          {/*      <Button variant="ghost" size="icon">*/}
-          {/*        <ChevronRight className="h-5 w-5 rotate-180" />*/}
-          {/*      </Button>*/}
-          {/*      <Button variant="ghost" size="icon">*/}
-          {/*        <span className="h-5 w-5 flex items-center justify-center">⏸️</span>*/}
-          {/*      </Button>*/}
-          {/*      <Button variant="ghost" size="icon">*/}
-          {/*        <ChevronRight className="h-5 w-5" />*/}
-          {/*      </Button>*/}
-          {/*      <Button variant="ghost" size="icon">*/}
-          {/*        <ChevronRight className="h-5 w-5 ml-1" />*/}
-          {/*      </Button>*/}
-          {/*    </div>*/}
-          {/*    <div className="text-sm">*/}
-          {/*      {currentTime}/{totalTime}*/}
-          {/*    </div>*/}
-          {/*  </div>*/}
-          {/*</div>*/}
+          <div className="flex flex-col h-[calc(100%-6rem)]">
+            <ReactPlayer url={"project2/output_video.mp4"} width="100%" controls={true}/>
+            <div className="flex justify-between items-center">
+              {/*<div className="flex gap-2">*/}
+                {/*<Button variant="ghost" size="icon">*/}
+                {/*  <ChevronRight className="h-5 w-5 rotate-180" />*/}
+                {/*</Button>*/}
+                {/*<Button variant="ghost" size="icon">*/}
+                {/*  <span className="h-5 w-5 flex items-center justify-center">⏸️</span>*/}
+                {/*</Button>*/}
+                {/*<Button variant="ghost" size="icon">*/}
+                {/*  <ChevronRight className="h-5 w-5" />*/}
+                {/*</Button>*/}
+                {/*<Button variant="ghost" size="icon">*/}
+                {/*  <ChevronRight className="h-5 w-5 ml-1" />*/}
+                {/*</Button>*/}
+              {/*</div>*/}
+              {/*<div className="text-sm">*/}
+              {/*  {currentTime}/{totalTime}*/}
+              {/*</div>*/}
+            </div>
+          </div>
         </div>
 
         {/* Properties panel */}
@@ -561,10 +603,10 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         </div>
 
         {/* Timeline ruler */}
-        <div className="flex border-b overflow-x-auto">
+        <div className="flex border-b max-w-full">
           <div className="w-60 border-r flex-shrink-0"></div>
-          <div className="flex-1 flex min-w-[800px]">
-            {Array.from({ length: 20 }).map((_, i) => (
+          <div className="flex min-w-[800px] overflow-scroll">
+            {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="w-[50px] flex items-center justify-center border-r text-sm py-2">
                 {i + 1}
               </div>
@@ -616,7 +658,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                       left: `${item.position}px`,
                       width: `${item.width}px`,
                     }}
-                    onMouseDown={(e) => handleTimelineItemMouseDown(e, track.id, item.id)}
+                    // onMouseDown={(e) => handleTimelineItemMouseDown(e, track.id, item.id)}
                     onContextMenu={(e) => handleContextMenu(e, track.id, item.id)}
                   >
                     <span className="truncate px-2">{item.name}</span>
