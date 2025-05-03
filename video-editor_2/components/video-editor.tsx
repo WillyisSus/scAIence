@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react"
 import { ChevronRight, Scissors, RotateCcw, RotateCw, Eye, Video, Volume, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AudioPlayer from 'react-h5-audio-player';
+import ReactPlayer from 'react-player';
 
 interface VideoEditorProps {
   onCancel?: () => void
@@ -42,6 +43,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     trackId: null,
     itemId: null,
   })
+
+  const [topBarProgress, setTopBarProgress] = useState("")
 
   const [is_data_loaded, setDataLoaded] = useState(false)
   const [resources, setResources] = useState([])
@@ -417,6 +420,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   }
 
   const onExportVideo = async () => {
+    setTopBarProgress("Đang xuất bản...")
     try {
       const response = await fetch("/api/compile_video", {
         method: 'GET',
@@ -425,13 +429,15 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         }
       })
 
-    } catch (error) {
+      setTopBarProgress("Xuất bản thành công.")
 
+    } catch (error) {
+      setTopBarProgress("Xuất bản thất bại.")
     }
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="max-w-full">
       {/* Top toolbar */}
       <div className="flex justify-between p-4 border-b">
         <div>
@@ -441,15 +447,18 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             </Button>
           )}
         </div>
+        <div>
+          {topBarProgress}
+        </div>
         <Button variant="outline" className="flex items-center gap-2" onClick={onExportVideo}>
-          Export <ChevronRight className="h-4 w-4" />
+          Xuất bản <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Main content */}
       <div className="flex-1 grid grid-cols-3 border-b">
         {/* Resources panel */}
-        <div className="border-r p-4">
+        <div className="border-r p-4 ">
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-medium text-lg">Tài nguyên</h2>
             <Button variant="ghost" size="icon" className="rounded-full">
@@ -457,7 +466,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4 overflow-scroll">
             {resources.map((resource) => (
               <div
                 key={resource.id}
@@ -483,28 +492,31 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         {/* Video player */}
         <div className="border-r p-4">
           <h2 className="font-medium text-lg mb-4">Trình phát</h2>
-          <div className="flex flex-col h-[calc(100%-6rem)]">
-            <div className="flex-1 bg-gray-100 rounded-md mb-4"></div>
-            <div className="flex justify-between items-center">
-              <div className="flex gap-2">
-                <Button variant="ghost" size="icon">
-                  <ChevronRight className="h-5 w-5 rotate-180" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <span className="h-5 w-5 flex items-center justify-center">⏸️</span>
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <ChevronRight className="h-5 w-5 ml-1" />
-                </Button>
-              </div>
-              <div className="text-sm">
-                {currentTime}/{totalTime}
-              </div>
-            </div>
-          </div>
+
+          <ReactPlayer url={"project2/output_video.mp4"} width="100%"/>
+
+          {/*<div className="flex flex-col h-[calc(100%-6rem)]">*/}
+          {/*  <div className="flex-1 bg-gray-100 rounded-md mb-4"></div>*/}
+          {/*  <div className="flex justify-between items-center">*/}
+          {/*    <div className="flex gap-2">*/}
+          {/*      <Button variant="ghost" size="icon">*/}
+          {/*        <ChevronRight className="h-5 w-5 rotate-180" />*/}
+          {/*      </Button>*/}
+          {/*      <Button variant="ghost" size="icon">*/}
+          {/*        <span className="h-5 w-5 flex items-center justify-center">⏸️</span>*/}
+          {/*      </Button>*/}
+          {/*      <Button variant="ghost" size="icon">*/}
+          {/*        <ChevronRight className="h-5 w-5" />*/}
+          {/*      </Button>*/}
+          {/*      <Button variant="ghost" size="icon">*/}
+          {/*        <ChevronRight className="h-5 w-5 ml-1" />*/}
+          {/*      </Button>*/}
+          {/*    </div>*/}
+          {/*    <div className="text-sm">*/}
+          {/*      {currentTime}/{totalTime}*/}
+          {/*    </div>*/}
+          {/*  </div>*/}
+          {/*</div>*/}
         </div>
 
         {/* Properties panel */}
@@ -535,7 +547,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       </div>
 
       {/* Timeline */}
-      <div className="h-64 flex flex-col">
+      <div className="flex flex-col">
         {/* Timeline toolbar */}
         <div className="flex items-center border-b p-2 gap-4">
           <Scissors className="h-5 w-5" />

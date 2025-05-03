@@ -95,7 +95,18 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
         project_name: projectNameValue
       })
     })
+  }
 
+  const selectProject = async (selectedProjectName : string) => {
+    const response = await fetch('/api/project_init/select_index', {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        project_name: selectedProjectName
+      })
+    })
   }
 
   return (
@@ -138,14 +149,17 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
           </thead>
           <tbody>
             {projectList.map((video) => (
-              <tr key={video} className="border-b">
+              <tr key={video} className="border-b" onClick={async () => {
+                await selectProject(video);
+                onGoToProject();
+              }}>
                 <td className="p-4">
                   <div className="flex items-center gap-2">
-                    <div
-                      className={`w-5 h-5 border rounded flex items-center justify-center cursor-pointer`}
-                      onClick={() => {}}
-                    >
-                    </div>
+                    {/*<div*/}
+                    {/*  className={`w-5 h-5 border rounded flex items-center justify-center cursor-pointer`}*/}
+                    {/*  onClick={() => {}}*/}
+                    {/*>*/}
+                    {/*</div>*/}
                     {video}
                   </div>
                 </td>
