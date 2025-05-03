@@ -93,7 +93,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     const onLoadAssets = async () => {
       if (is_data_loaded) return;
 
-      const response = await fetch('/api/assets_data', {
+      const response = await fetch('/api/project_init/save_resources', {
         method: 'GET',
         headers: {
           'Content-type': 'application/json'
@@ -102,18 +102,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
       if (response.ok){
         const data = await response.json();
-        const resource_array = [];
-        let id = 0;
-        data.output.forEach((e: any) => {
-          resource_array.push({id: id, name:`image_${id}`, source: e.image_url, type: "image"});
-          id++;
-          resource_array.push({id: id, name:`text_${id - 1}`, source: e.script, type: "subtitle"});
-          id++;
-          resource_array.push({id: id, name:`sound_${id - 2}`, source: e.audio_url, type: "audio"});
-          id++;
-        })
+        const resource_array = data.output;
 
-        setResources(resource_array)
+        setResources(resource_array);
         setDataLoaded(true)
       }
     }

@@ -1,5 +1,5 @@
 import {NextResponse} from "next/server";
-import {readdir, unlink} from "fs/promises";
+import fsPromises, {readdir, unlink} from "fs/promises";
 import ffmpeg from 'fluent-ffmpeg';
 import path from "node:path";
 const ffmpeg_static = require('ffmpeg-static');
@@ -15,19 +15,22 @@ const fluent_ffmpeg = require('fluent-ffmpeg');
 
 export async function GET(req: any, res: any) {
     // settings
-    let resX = 1920
-    let resY = 1080
-    let videoEncode = 'libx264' // H.264
-    let audioEncode = 'aac'
-    let fps = 15 // vid tĩnh nên cũng không quan trọng lắm
-    let sampleRate = 24000 // audio frequency (Hz)
-    let crf = 23 // 0-51 với 0 là lossless, 23 mặc định, 51 tệ nhất / số càng nhỏ file càng nặng, xử lý lâu, chất lượng tốt
-    let preset = 'medium' // ultrafast, superfast, veryfast, faster, fast, medium (mặc định), slow, slower, veryslow / ảnh hưởng đến tốc độ nén, càng chậm file càng nhỏ (chất lượng tốt hơn?)
+    const resX = 1920
+    const resY = 1080
+    const videoEncode = 'libx264' // H.264
+    const audioEncode = 'aac'
+    const fps = 15 // vid tĩnh nên cũng không quan trọng lắm
+    const sampleRate = 24000 // audio frequency (Hz)
+    const crf = 23 // 0-51 với 0 là lossless, 23 mặc định, 51 tệ nhất / số càng nhỏ file càng nặng, xử lý lâu, chất lượng tốt
+    const preset = 'medium' // ultrafast, superfast, veryfast, faster, fast, medium (mặc định), slow, slower, veryslow / ảnh hưởng đến tốc độ nén, càng chậm file càng nhỏ (chất lượng tốt hơn?)
+    const appdata = await fsPromises.readFile(`public/appdata.json`);
+    const appdatajson = await JSON.parse(appdata);
+    const project_name = appdatajson.current_project;
 
     // prepare
-    const images = await readdir('./public/images')
+    const images = await readdir(`./public/${project_name}/images`)
     const imageCount = images.filter(image => /^generated_image_\d+\.png$/.test(image)).length
-    const voices = await readdir('./public/sounds')
+    const voices = await readdir(`./public/${project_name}/sounds`)
     const voiceCount = voices.filter(voice => /^generated_voice_\d+\.mp3$/.test(voice)).length
     let inputs: string[] = []
     let filters = []
@@ -40,10 +43,10 @@ export async function GET(req: any, res: any) {
         // if (i <= imageCount) {
             await new Promise<void>((resolve, reject) => {
                 ffmpeg()
-                    .input(`./public/images/generated_image_${i}.png`)
+                    .input(`./public/${project_name}/images/generated_image_${i}.png`)
                     .inputOption(['-loop 1'])
-                    .input(`./public/sounds/generated_voice_${i}.mp3`)
-                    .output(`./public/output_video_${i}.mp4`)
+                    .input(`./public/${project_name}/sounds/generated_voice_${i}.mp3`)
+                    .output(`./public/${project_name}/output_video_${i}.mp4`)
                     .outputOptions(['-pix_fmt yuv420p', `-crf ${crf}`, `-preset ${preset}`, '-shortest'])
                     .videoCodec(videoEncode)
                     .audioCodec(audioEncode)
@@ -57,10 +60,10 @@ export async function GET(req: any, res: any) {
                         console.log(`Done ${i}`)
                         resolve()
                     })
-                    // .on('error', () => {
-                    //     console.log(`Error occur at ${i}`)
-                    //     reject()
-                    // })
+                    .on('error', () => {
+                        console.log(`Error occurred at ${i}`)
+                        reject()
+                    })
                     .run()
             })
         // }
@@ -71,7 +74,7 @@ export async function GET(req: any, res: any) {
 
     }
 
-    const publicList = await readdir('./public')
+    const publicList = await readdir(`./public/${project_name}`)
     const videos = publicList.filter(video => /^output_video_\d+\.mp4$/.test(video))
     const videoCount = videos.length
     if (videoCount === 0 || videoCount != imageCount) {
@@ -79,7 +82,7 @@ export async function GET(req: any, res: any) {
         return NextResponse.json({output: "we not good too"})
     }
     videos.forEach((video, index) => {
-        inputs.push(`./public/${video}`)
+        inputs.push(`./public/${project_name}/${video}`)
         // filters.push({
         //     filter: 'scale',
         //     options: {w: resX, h: resY, force_original_aspect_ratio: 'decrease'},
@@ -123,7 +126,7 @@ export async function GET(req: any, res: any) {
         ff
             .complexFilter(filters)
             .outputOptions(['-map [v]', '-map [a]', '-pix_fmt yuv420p', `-crf ${crf}`, `-preset ${preset}`])
-            .output('./public/output_video.mp4')
+            .output(`./public/${project_name}/output_video.mp4`)
             .videoCodec(videoEncode)
             .audioCodec(audioEncode)
             .fps(fps)
@@ -136,7 +139,7 @@ export async function GET(req: any, res: any) {
                 resolve()
             })
             .on('error', () => {
-                console.log(`Error occured `)
+                console.log(`Error occurred `)
                 reject()
             })
             .run()

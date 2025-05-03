@@ -8,15 +8,16 @@ export async function POST(req: { json: () => any; }, res: any) {
     // console.log(process.cwd())
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.REACT_APP_GEMINI_API_KEY});
+        const ai = new GoogleGenAI({ apiKey: "you think?"});
         const data = await req.json()
-        const prompt = data.body
+        const prompt = data.script
+        const vibe = data.vibe;
 
         const response = await ai.models.generateContent({
             model: "gemini-2.0-flash",
             contents: prompt,
             config: {
-                systemInstruction: "The answers are split into paragraphs only. Do not use bullets or numbering when answer.",
+                systemInstruction: "The answers are split into paragraphs only. Do not use bullets or numbering when answer. The answer will have a vibe of " + vibe,
             //     tools: [{googleSearchRetrieval:{}}],
             }
         });

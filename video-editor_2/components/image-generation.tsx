@@ -15,7 +15,7 @@ interface ImageItem {
     script: string,
     audio_url: string,
 
-    // Support upload/record audio    
+    // Support upload/record audio
     custom_audio?: File | Blob,
     custom_audio_url?: string,
     audio_version?: number
@@ -44,18 +44,53 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
 
             if (response.ok) {
                 const data = await response.json();
-                setAssets(data);
+                setAssets(data.output);
                 setDataLoaded(true)
             }
         }
+
         onLoadAssets().then()
+
         return
     }, [])
+
+    const saveResources = async () => {
+        const response = await fetch('/api/assets_data', {
+            method: 'GET',
+            headers: {
+                'Content-type': 'application/json'
+            }
+        })
+
+        if (response.ok) {
+            const resource_array = [];
+            const data = await response.json();
+            let id = 0;
+            data.output.forEach((e: any) => {
+                resource_array.push({id: id, name: `image_${id}`, source: e.image_url, type: "image"});
+                id++;
+                resource_array.push({id: id, name: `text_${id - 1}`, source: e.script, type: "subtitle"});
+                id++;
+                resource_array.push({id: id, name: `sound_${id - 2}`, source: e.audio_url, type: "audio"});
+                id++;
+            })
+
+            const response2 = await fetch('/api/project_init/save_resources', {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    resource_array : resource_array
+                })
+            })
+        }
+    }
 
     return (
         <div className="container mx-auto py-8 px-4">
             {assets.map((asset) => {
-            
+
                 console.log("Current")
                 console.log(asset)
 
@@ -68,9 +103,9 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
                                 <div className="items-center grid grid-rows-2 col-span-3">
                                     <textarea readOnly={true} defaultValue={asset.script}
                                         className="h-full text-base"></textarea>
-                                    <AudioPlayer 
+                                    <AudioPlayer
                                         key={asset.audio_version || 0}
-                                        src={asset.custom_audio_url || asset.audio_url} 
+                                        src={asset.custom_audio_url || asset.audio_url}
                                         onPlay={(e) => {
                                             e.preventDefault();
                                             console.log("onPlay")
@@ -110,7 +145,11 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
                 assets={assets}
             />
             <div className="w-full flex items-end justify-end">
-                <Button variant="outline" className="bg-black text-white px-6" onClick={onConfirmImages}>
+                <Button variant="outline" className="bg-black text-white px-6" onClick={async event => {
+                    event.preventDefault();
+                    await saveResources();
+                    onConfirmImages();
+                }}>
                     Xác nhận thay đổi
                 </Button>
                 <Button variant="outline" className="bg-red-600 text-white px-6">

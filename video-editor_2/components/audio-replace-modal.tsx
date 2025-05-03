@@ -24,9 +24,22 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
     const [tempAudioBlob, setTempAudioBlob] = useState<Blob | null>(null)
 
     const handleSaveAudio = async () => {
-        if (!selectedAssetId || !tempAudioBlob) return
+        if (!selectedAssetId || !tempAudioBlob) return;
 
-        const custom_url = `sounds/custom_audio_${selectedAssetId}.webm`
+        //Upload audio
+        const formData = new FormData();
+        formData.append('file', tempAudioBlob); // Blob or File
+        formData.append('asset_id', selectedAssetId.toString());
+
+        const new_audio_response = await fetch('/api/upload_audio', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!new_audio_response.ok) return;
+
+        const result = await new_audio_response.json();
+        const custom_url = result.output;
 
         // Update assets
         const updatedAssets = assets.map((asset) =>
@@ -43,16 +56,6 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
             },
             body: JSON.stringify(saveAssets),
         })
-
-        //Upload audio
-        const formData = new FormData();
-        formData.append('file', tempAudioBlob); // Blob or File
-        formData.append('asset_id', selectedAssetId.toString());
-
-        await fetch('/api/upload_audio', {
-            method: 'POST',
-            body: formData,
-        });
 
         setAssets(updatedAssets)
         setShowAudioModal(false)

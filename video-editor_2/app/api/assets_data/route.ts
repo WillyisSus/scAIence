@@ -4,10 +4,12 @@ import fsPromises from 'fs/promises';
 export async function POST(req: { json: () => any; }, res: any) {
     try {
         const data = await req.json();
-
-        const save_data = JSON.stringify(data);
-
-        await fsPromises.writeFile("public/assets_data.json", save_data);
+        const assets_data = data.my_assets;
+        const save_data = JSON.stringify(assets_data);
+        const appdata = await fsPromises.readFile(`public/appdata.json`);
+        const appdatajson = await JSON.parse(appdata);
+        const project_name = appdatajson.current_project;
+        await fsPromises.writeFile(`public/${project_name}/assets_data.json`, save_data);
 
         return NextResponse.json({ output: "we good" })
     }
@@ -18,12 +20,14 @@ export async function POST(req: { json: () => any; }, res: any) {
 
 export async function GET(req: { json: () => any; }, res: any) {
     try {
-
-        const save_data = await fsPromises.readFile("public/assets_data.json");
+        const appdata = await fsPromises.readFile(`public/appdata.json`);
+        const appdatajson = await JSON.parse(appdata);
+        const project_name = appdatajson.current_project;
+        const save_data = await fsPromises.readFile(`public/${project_name}/assets_data.json`);
         // @ts-ignore
-        const assets_data = JSON.parse(save_data);
+        const assets_data = await JSON.parse(save_data);
 
-        return NextResponse.json(assets_data)
+        return NextResponse.json({output: assets_data})
     }
     catch (error) {
         return NextResponse.json({ output: "we aint good" })

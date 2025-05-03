@@ -16,7 +16,7 @@ interface ImageItem {
   script: string,
   audio_url: string,
 
-  // Support upload/record audio  
+  // Support upload/record audio
   custom_audio?: File | Blob,
   custom_audio_url?: string
 }
@@ -143,10 +143,10 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
           })
         })
 
-        await image_response.json();
 
-        if (image_response.ok) {
-          s.image_url = "images/generated_image_" + s.asset_id + ".png"
+        if (image_response.ok){
+          let image_result = await image_response.json();
+          s.image_url = image_result.output;
         }
 
         setProgress("Generating voice " + (s.asset_id) + " out of " + (temp_array.length) + "...")
@@ -162,8 +162,9 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
           })
         })
 
-        if (voice_response.ok) {
-          s.audio_url = "sounds/generated_voice_" + s.asset_id + ".mp3"
+        if (voice_response.ok){
+          let voice_result = await voice_response.json();
+          s.audio_url = voice_result.output;
         }
       }
 
@@ -173,7 +174,9 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
         headers: {
           'Content-type': 'application/json'
         },
-        body: JSON.stringify(temp_array)
+        body: JSON.stringify({
+          my_assets: temp_array
+        })
       })
       setProgress("Finished.")
     }
@@ -334,22 +337,22 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
           {/*/>*/}
           {/*</div>*/}
 
-          <div className="flex justify-end gap-4 mt-auto">
-            <span className="text-center justify-self-center content-center">{progress}</span>
-            <Button variant="outline" className="px-6" onClick={async () => { await onGenerateImagesAndVoiceWithScript() }}>
-              Hủy bản phác thảo
-            </Button>
-            <Button className="bg-black text-white px-6" onClick={
-              async () => {
-                await onGenerateImagesAndVoiceWithScript()
-                onApproveAndCreate()
-              }
-            }>
-              Phê duyệt và tạo ảnh
-            </Button>
+            <div className="flex justify-end gap-4 mt-auto">
+              <span className="text-center justify-self-center content-center">{progress}</span>
+              <Button variant="outline" className="px-6" onClick={async () => {}}>
+                Hủy bản phác thảo
+              </Button>
+              <Button className="bg-black text-white px-6" onClick={
+                async () => {
+                  await onGenerateImagesAndVoiceWithScript()
+                  onApproveAndCreate()
+                }
+              }>
+                Phê duyệt và tạo ảnh
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
   )
 }
