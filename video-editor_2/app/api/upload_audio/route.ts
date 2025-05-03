@@ -11,13 +11,17 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await (file as Blob).arrayBuffer());
     const appdata = await fsPromises.readFile(`public/appdata.json`);
-    const appdatajson = await JSON.parse(appdata);
+    const appdatajson = await JSON.parse(appdata.toString());
     const project_name = appdatajson.current_project;
+
+    const buffer = Buffer.from(await (file as Blob).arrayBuffer());
     const filePath = path.join(process.cwd(), `public/${project_name}/sounds`, `custom_audio_${assetId}.webm`);
 
     await writeFile(filePath, buffer);
 
-    return NextResponse.json({ message: 'Audio saved successfully', output:  path.join(`${project_name}/sounds`, `custom_audio_${assetId}.webm`)});
+    return NextResponse.json({
+        message: 'Audio saved successfully', 
+        audio_path: path.join(`${project_name}/sounds`, `custom_audio_${assetId}.webm`)
+    });
 }

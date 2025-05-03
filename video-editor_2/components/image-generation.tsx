@@ -106,21 +106,18 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
     }
 
     return (
-        <div className="container mx-auto py-8 px-4">
+        <div className="container mx-auto py-4 px-4">
             {assets.map((asset) => {
 
-                console.log("Current")
-                console.log(asset)
-
                 return (
-                <div key={asset.asset_id} className="border rounded-lg p-6">
-                    <div className="bg-white w-full rounded mb-1 flex items-center justify-center text-xs">
+                <div key={asset.asset_id} className="border rounded-lg py-2 pl-2 mb-2">
+                    <div className="bg-white w-full rounded flex items-center justify-center text-xs">
                         <div className="grid grid-flow-row w-full gap-4">
                             <div className="flex-1 grid grid-cols-4 border-b">
-                                <img src={asset.image_url} alt={asset.script} width="200em" className="col-span-1" />
+                                <img src={asset.image_url} alt={asset.script} className="pr-2 col-span-1 mx-auto my-auto w-auto h-auto object-contain" />
                                 <div className="items-center grid grid-rows-2 col-span-3">
                                     <textarea readOnly={true} defaultValue={asset.script}
-                                        className="h-full text-base"></textarea>
+                                        className="h-full text-base p-1"></textarea>
                                     <AudioPlayer
                                         key={asset.audio_version || 0}
                                         src={asset.custom_audio_url || asset.audio_url}
@@ -131,15 +128,15 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
                                     </AudioPlayer>
                                 </div>
                             </div>
-                            <div className="w-full">
-                                <Button variant="outline" className="bg-black text-white px-6">
+                            <div className="w-full space-x-2">
+                                <Button variant="outline" className="bg-black text-white p-2">
                                     Thay đổi hình ảnh
                                 </Button>
-                                <Button variant="outline" className="bg-red-600 text-white px-6">
+                                <Button variant="outline" className="bg-red-600 text-white p-2">
                                     Xóa câu lệnh này
                                 </Button>
                                 {/* Support upload/record audio */}
-                                <Button variant="outline" className="bg-green-600 text-white px-6"
+                                <Button variant="outline" className="bg-green-600 text-white p-2"
                                     onClick={() => {
                                         setSelectedAssetId(asset.asset_id);
                                         setShowAudioModal(true);

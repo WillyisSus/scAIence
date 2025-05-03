@@ -8,6 +8,7 @@ interface ImageItem {
     audio_url: string,
     custom_audio?: File | Blob,
     custom_audio_url?: string,
+    audio_version?: number
 }
 
 interface AudioReplaceModalProps {
@@ -28,7 +29,7 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
 
         //Upload audio
         const formData = new FormData();
-        formData.append('file', tempAudioBlob); // Blob or File
+        formData.append('file', tempAudioBlob);
         formData.append('asset_id', selectedAssetId.toString());
 
         const new_audio_response = await fetch('/api/upload_audio', {
@@ -39,7 +40,7 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
         if (!new_audio_response.ok) return;
 
         const result = await new_audio_response.json();
-        const custom_url = result.output;
+        const custom_url = result.audio_path;
 
         // Update assets
         const updatedAssets = assets.map((asset) =>
@@ -48,13 +49,16 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
                 : asset
         )
 
-        const saveAssets = updatedAssets.map(({ custom_audio, ...rest }) => rest)
+        const saveAssets = updatedAssets.map(({ custom_audio, audio_version, ...rest }) => rest)
+        
         await fetch('/api/assets_data', {
             method: 'POST',
             headers: {
                 'Content-type': 'application/json',
             },
-            body: JSON.stringify(saveAssets),
+            body: JSON.stringify({
+                my_assets: saveAssets
+            })
         })
 
         setAssets(updatedAssets)
@@ -66,7 +70,7 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
         <>
             {showAudioModal && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-white p-6 rounded-lg w-[500px] shadow-lg relative">
+                    <div className="bg-white p-6 rounded-lg w-1/3 h-1/2 shadow-lg relative flex flex-col">
                         <h2 className="text-lg font-semibold mb-4">Replace Audio</h2>
 
                         <div className="mb-4">
@@ -84,8 +88,12 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
                             </button>
                         </div>
 
+
+                        <div className="h-1/2 ">
+                            
+                        
                         {mode === 'upload' && (
-                            <div className="mb-4">
+                            <div className="mb-auto flex justify-center items-center h-1/2">
                                 <input
                                     type="file"
                                     accept="audio/*"
@@ -97,17 +105,22 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
                             </div>
                         )}
 
+                        
                         {mode === 'record' && (
-                            <AudioRecorder onRecordingComplete={(blob) => setTempAudioBlob(blob)} />
+                            <div className="mb-auto flex justify-center items-center h-1/2">
+                                <AudioRecorder onRecordingComplete={(blob) => setTempAudioBlob(blob)} />
+                            </div>
                         )}
 
                         {tempAudioBlob && (
-                            <div className="mb-4">
+                            <div className="my-auto flex justify-center items-center h-1/2">
                                 <audio controls src={URL.createObjectURL(tempAudioBlob)} />
                             </div>
                         )}
 
-                        <div className="flex justify-end space-x-2">
+                        </div>
+
+                        <div className="flex mt-auto justify-end space-x-2">
                             <button
                                 className="bg-gray-400 text-white px-4 py-2 rounded"
                                 onClick={() => {
