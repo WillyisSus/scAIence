@@ -220,6 +220,23 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
     }
   }
 
+  const onGenerateVideo = async () => {
+    setProgress("Generating Video... (might take a while)")
+
+    await fetch('/api/video_generation', {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt_data: scriptOutput,
+        prompt_style: imageVibe
+      })
+    })
+
+    setProgress("Video done!")
+  }
+
   const saveLocalFile = async (file: File) => {
     let reader = new FileReader();
     reader.readAsDataURL(file);
@@ -421,6 +438,15 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
               <span className="text-center justify-self-center content-center">{progress}</span>
               <Button variant="outline" className="px-6" onClick={async () => {}}>
                 Hủy bản phác thảo
+              </Button>
+              <Button variant="outline" className="px-6" onClick={async () => {
+                if (scriptOutput.length === 0) {
+                  toast.error("Khu vực kịch bản đang trống!")
+                  return;
+                }
+                await onGenerateVideo();
+              }}>
+                Tạo video AI
               </Button>
               <Button className="bg-black text-white px-6" onClick={
                 async () => {

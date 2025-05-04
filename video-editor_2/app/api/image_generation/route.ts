@@ -6,7 +6,6 @@ import fsPromises from "fs/promises";
 
 export async function POST(req: { json: () => any; }, res: any) {
     try {
-        console.log("Test");
         const appdata = await fsPromises.readFile(`public/appdata.json`);
         const appdatajson = await JSON.parse(appdata);
         const project_name = appdatajson.current_project;
