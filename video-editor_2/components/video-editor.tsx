@@ -480,7 +480,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   }
 
   return (
-    <div className="max-w-full">
+    <div className="max-w-full max-h-full">
       {/* Top toolbar */}
       <div className="flex justify-between p-4 border-b">
         <div>
@@ -499,17 +499,17 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 grid grid-cols-3 border-b">
+      <div className="flex grid grid-cols-3 border-b h-100 max-h-100">
         {/* Resources panel */}
         <div className="border-r p-4 ">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-4 max-h-80">
             <h2 className="font-medium text-lg">Tài nguyên</h2>
             <Button variant="ghost" size="icon" className="rounded-full">
               <span className="text-xl">+</span>
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 overflow-scroll">
+          <div className="grid grid-cols-3 gap-4 max-h-80 overflow-y-scroll">
             {resources.map((resource) => (
               <div
                 key={resource.id}
@@ -578,7 +578,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 <li>• Click chuột phải vào tài nguyên để xóa</li>
               </ul>
             </div>) :
-              display_item.type == "subtitle" ? (<textarea defaultValue={display_item.source}></textarea>) :
+              display_item.type == "subtitle" ? (<textarea className="w-full h-full max-h-80" defaultValue={display_item.source}></textarea>) :
               display_item.type == "audio" ? (<AudioPlayer src={display_item.source} onPlay={(e) => {
                     e.preventDefault();
                     console.log("onPlay")
