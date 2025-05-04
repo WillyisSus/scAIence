@@ -2,8 +2,9 @@
 
 import {useEffect, useState} from "react"
 import { Check, Plus, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import ReactModal from "react-modal"
+import { Button } from "@/components/ui/button";
+import { ToastContainer, toast } from 'react-toastify';
+import ReactModal from "react-modal";
 
 
 interface DashboardProps {
@@ -95,6 +96,11 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
         project_name: projectNameValue
       })
     })
+
+    if (response.ok){
+      toast.success("Create project successfully");
+      return true;
+    }
   }
 
   const selectProject = async (selectedProjectName : string) => {
@@ -298,8 +304,8 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
               Đóng
             </Button>
             <Button onClick={async event =>  {
-              await initProject();
-              onCreateVideo()
+              let temp = await initProject();
+              if (temp) onCreateVideo()
             }} className="p-3 m-2">
               Tạo
             </Button>
