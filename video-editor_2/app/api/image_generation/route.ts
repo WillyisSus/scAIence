@@ -4,16 +4,13 @@ import {NextResponse} from "next/server";
 import dotenv from 'dotenv';
 import fsPromises from "fs/promises";
 
-dotenv.config({ path: '/' });
-
-
 export async function POST(req: { json: () => any; }, res: any) {
     try {
         console.log("Test");
         const appdata = await fsPromises.readFile(`public/appdata.json`);
         const appdatajson = await JSON.parse(appdata);
         const project_name = appdatajson.current_project;
-        const ai = new GoogleGenAI({ apiKey: "nope"});
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY});
         const data = await req.json()
         const prompt = data.prompt_data
         const index = data.prompt_index

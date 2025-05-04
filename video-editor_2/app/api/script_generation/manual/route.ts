@@ -2,6 +2,7 @@ import {GoogleGenAI} from "@google/genai"
 import {NextResponse} from "next/server";
 import dotenv from 'dotenv';
 
+
 export async function POST(req: { json: () => any; }, res: any) {
     // console.log(process.cwd())
 

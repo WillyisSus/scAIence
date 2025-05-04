@@ -23,13 +23,19 @@ interface ImageItem {
 
 export default function ContentCreation({ onApproveAndCreate, onCancel }: ContentCreationProps) {
 
-  const [scriptOutput, setScriptOutput] = useState("")
-  const [scriptInput, setScriptInput] = useState("")
-  const [progress, setProgress] = useState("")
-  const [scriptVibe, setScriptVibe] = useState("Casual")
-  const [imageVibe, setImageVibe] = useState("Realistic")
-  const [voiceLanguage, setVoiceLanguage] = useState("en")
+  const [scriptOutput, setScriptOutput] = useState("");
+  const [scriptInput, setScriptInput] = useState("");
+  const [scriptFileName, setScriptFileName] = useState("");
+  const [scriptFile, setScriptFile] = useState("");
+  const [scriptLink, setScriptLink] = useState("");
 
+  const [progress, setProgress] = useState("");
+  const [scriptVibe, setScriptVibe] = useState("Casual");
+  const [imageVibe, setImageVibe] = useState("Realistic");
+  const [voiceLanguage, setVoiceLanguage] = useState("en");
+  
+  const [scriptInputType, setScriptInputType] = useState("manual");
+  
   const [assets, setAssets] = useState<ImageItem[]>([
     // {asset_id: 0, image_url: "", script: "An apple", audio_url: "sounds/output.mp3"}
     // {asset_id: 1, image_url: "", script: "A pineapple", audio_url: "sounds/output.mp3"},
@@ -44,16 +50,45 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
     if (promptArea !== null && promptButton !== null) {
       try {
         promptButton.setAttribute("disabled", '');
-        const response = await fetch('/api/script_generation', {
-          method: 'POST',
-          headers: {
-            'Content-type': 'application/json'
-          },
-          body: JSON.stringify({
-            script: scriptInput,
-            vibe: scriptVibe,
+        let response;
+
+        if (scriptInputType == "manual"){
+          response = await fetch('/api/script_generation/manual', {
+            method: 'POST',
+            headers: {
+              'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              script: scriptInput,
+              vibe: scriptVibe,
+            })
           })
-        })
+        }
+        else if (scriptInputType == "link"){
+          response = await fetch('/api/script_generation/link', {
+            method: 'POST',
+            headers: {
+              'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              link: scriptLink,
+              vibe: scriptVibe,
+            })
+          })
+        }
+        else if (scriptInputType == "file"){
+          response = await fetch('/api/script_generation/file', {
+            method: 'POST',
+            headers: {
+              'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              filename: scriptFileName,
+              file: scriptFile,
+              vibe: scriptVibe,
+            })
+          })
+        }
 
         let data = await response.json()
 
@@ -185,6 +220,21 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
     }
   }
 
+  const saveLocalFile = async (file: any) => {
+    let reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function (evt) {
+      console.log("Read success");
+      console.log(reader.result);
+      if (reader.result == null) return;
+      let temp : string = reader.result.toString();
+      setScriptFile(temp.split(',')[1])
+    }
+    reader.onerror = function (evt) {
+      console.log("Read bad");
+    }
+  }
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -194,31 +244,60 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
           <div className="mb-6">
             <label className="block mb-2 font-medium">Nhập chủ đề tạo</label>
             <div className="flex gap-4">
-              {/*<div className="relative w-full">*/}
-              {/*<select className="w-full p-2 border rounded appearance-none pr-10">*/}
-              {/*  <option>Thú cưng</option>*/}
-              {/*  <option>Du lịch</option>*/}
-              {/*  <option>Công nghệ</option>*/}
-              {/*</select>*/}
-              {/*<ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />*/}
-              {/*</div>*/}
-              <div className="w-full">
-                <input
-                  type="text"
-                  placeholder="Nhập từ khóa bạn muốn (tối đa 20 từ)..."
-                  className="w-full p-2 border rounded"
-                  id="my-prompt"
-                  value={scriptInput}
-                  onChange={event => setScriptInput(event.target.value)}
-                />
+              <div className="relative w-full">
+              <select className="w-full p-2 border rounded appearance-none pr-10" onChange={event => {
+                setScriptInputType(event.target.value);
+                setScriptFileName("");
+              }} value={scriptInputType}>
+                <option value={"manual"}>Tự nhập</option>
+                <option value={"file"}>Tải từ file</option>
+                <option value={"link"}>Từ đường dẫn</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
               </div>
+              {
+                scriptInputType == "manual" ?
+                    <div className="w-full">
+                      <input
+                          type="text"
+                          placeholder="Nhập từ khóa bạn muốn (tối đa 20 từ)..."
+                          className="w-full p-2 border rounded"
+                          id="my-prompt"
+                          value={scriptInput}
+                          onChange={event => setScriptInput(event.target.value)}
+                      />
+                    </div>
+                    : scriptInputType == "file" ?
+                        <div>
+                        <input type="file" value={scriptFileName} onChange={async event => {
+                          if (event.target.files == null) return;
+                          setScriptFileName(event.target.value);
+
+                          const input_file= event.target.files[0];
+                          await saveLocalFile(input_file);
+
+                        }}/>
+                        </div>
+
+                        : scriptInputType == "link" ? <div className="w-full">
+                          <input
+                              type="text"
+                              placeholder="Nhập đường dẫn"
+                              className="w-full p-2 border rounded"
+                              id="my-prompt-link"
+                              value={scriptLink}
+                              onChange={event => setScriptLink(event.target.value)}
+                          />
+                        </div> : <></>
+              }
             </div>
           </div>
 
           <div className="mb-6">
             <label className="block mb-2 font-medium">Phong cách</label>
             <div className="relative w-full">
-              <select className="w-full p-2 border rounded appearance-none pr-10" onChange={event => setScriptVibe(event.target.value)} value={scriptVibe}>
+              <select className="w-full p-2 border rounded appearance-none pr-10"
+                      onChange={event => setScriptVibe(event.target.value)} value={scriptVibe}>
                 <option value={"Casual"}>Phổ thông</option>
                 <option value={"Comical"}>Hài hước</option>
                 <option value={"Serious"}>Nghiêm túc</option>
