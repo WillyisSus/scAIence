@@ -2,6 +2,7 @@
 import { ChevronDown, Play, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react";
+import { ToastContainer, toast } from 'react-toastify';
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 
@@ -89,6 +90,9 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
             })
           })
         }
+        else {
+          return;
+        }
 
         let data = await response.json()
 
@@ -154,13 +158,9 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
       prompt_text_area && prompt_text_area.nodeValue ? setScriptOutput(prompt_text_area.nodeValue) : null;
 
       let asset_index = 0;
-      // console.log(scriptOutput)
       let temp_array = scriptOutput.split("\.").filter((a) => a.trim().length !== 0).map((a) => { asset_index++; return { asset_id: asset_index, script: a, audio_url: "", image_url: "", custom_audio_url: "" } });
       setAssets(temp_array)
       console.log(temp_array);
-      // console.log(assets);
-
-
 
       if (temp_array.length === 0) return;
 
@@ -220,18 +220,35 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
     }
   }
 
-  const saveLocalFile = async (file: any) => {
+  const onGenerateVideo = async () => {
+    setProgress("Generating Video... (might take a while)")
+
+    await fetch('/api/video_generation', {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt_data: scriptOutput,
+        prompt_style: imageVibe
+      })
+    })
+
+    setProgress("Video done!")
+  }
+
+  const saveLocalFile = async (file: File) => {
     let reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = function (evt) {
-      console.log("Read success");
-      console.log(reader.result);
+      console.log(file.size);
+      toast.success("File uploaded successfully");
       if (reader.result == null) return;
       let temp : string = reader.result.toString();
       setScriptFile(temp.split(',')[1])
     }
     reader.onerror = function (evt) {
-      console.log("Read bad");
+      toast.error("File uploaded failed");
     }
   }
 
@@ -272,10 +289,11 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
                         <input type="file" value={scriptFileName} onChange={async event => {
                           if (event.target.files == null) return;
                           setScriptFileName(event.target.value);
-
-                          const input_file= event.target.files[0];
-                          await saveLocalFile(input_file);
-
+                          const input_file = event.target.files[0];
+                          if (input_file.size <= 10485760)
+                            await saveLocalFile(input_file);
+                          else
+                            toast.error("File is larger than 10MB");
                         }}/>
                         </div>
 
@@ -421,8 +439,21 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
               <Button variant="outline" className="px-6" onClick={async () => {}}>
                 Hủy bản phác thảo
               </Button>
+              <Button variant="outline" className="px-6" onClick={async () => {
+                if (scriptOutput.length === 0) {
+                  toast.error("Khu vực kịch bản đang trống!")
+                  return;
+                }
+                await onGenerateVideo();
+              }}>
+                Tạo video AI
+              </Button>
               <Button className="bg-black text-white px-6" onClick={
                 async () => {
+                  if (scriptOutput.length === 0) {
+                    toast.error("Khu vực kịch bản đang trống!")
+                    return;
+                  }
                   await onGenerateImagesAndVoiceWithScript()
                   onApproveAndCreate()
                 }
@@ -432,6 +463,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
             </div>
           </div>
         </div>
+        <ToastContainer/>
       </div>
   )
 }

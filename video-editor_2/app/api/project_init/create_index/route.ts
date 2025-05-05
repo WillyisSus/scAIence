@@ -21,17 +21,16 @@ export async function POST(req: { json: () => any; }, res: any)  {
             let appdatajson = await JSON.parse(appdata);
             appdatajson.current_project = name;
             appdatajson.projects_list.push(name);
-            console.log("Helo?")
-            console.log(appdatajson)
+            appdatajson.current_page = 1;
             await fsPromises.writeFile(`public/appdata.json`, JSON.stringify(appdatajson));
             return NextResponse.json({output: "Project created"})
         }
 
         catch (error){
-            console.log("Goodbye?")
             await fsPromises.writeFile(`public/appdata.json`, JSON.stringify({
                 current_project : name,
                 projects_list : [name],
+                current_page: 1,
             }));
             return NextResponse.json({output: "Project created"})
         }
