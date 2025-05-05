@@ -24,6 +24,7 @@ export default function Home() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(data)
         setCurrentInterface(data.output);
         setDataLoaded(true)
       }
@@ -32,7 +33,7 @@ export default function Home() {
     onLoadAssets().then()
 
     return
-  }, [])
+  }, [currentInterface])
 
   const goToPage = async (page: number) => {
     let response = await fetch("/api/project_init/set_page", {

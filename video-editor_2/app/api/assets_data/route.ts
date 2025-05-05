@@ -11,7 +11,6 @@ export async function POST(req: { json: () => any; }, res: any) {
         const assets_data = data.my_assets;
         const save_data = JSON.stringify(assets_data);
         await fsPromises.writeFile(`public/${project_name}/assets_data.json`, save_data);
-
         return NextResponse.json({ output: "we good" })
     }
     catch (error) {

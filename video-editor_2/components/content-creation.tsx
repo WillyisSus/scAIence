@@ -158,7 +158,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
       prompt_text_area && prompt_text_area.nodeValue ? setScriptOutput(prompt_text_area.nodeValue) : null;
 
       let asset_index = 0;
-      let temp_array = scriptOutput.split("\.").filter((a) => a.trim().length !== 0).map((a) => { asset_index++; return { asset_id: asset_index, script: a, audio_url: "", image_url: "", custom_audio_url: "" } });
+      let temp_array = scriptOutput.split("\.").filter((a) => a.trim().length !== 0).map((a) => { asset_index++; return { asset_id: asset_index, script: a, audio_url: "", image_url: "", custom_audio_url: "", audio_duration: 0} });
       setAssets(temp_array)
       console.log(temp_array);
 
@@ -200,6 +200,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
         if (voice_response.ok){
           let voice_result = await voice_response.json();
           s.audio_url = voice_result.output;
+          s.audio_duration = voice_result.duration;
         }
       }
 

@@ -1,4 +1,5 @@
 import fsPromises from "fs/promises";
+import { isCustomErrorPage } from "next/dist/build/utils";
 import {NextResponse} from "next/server";
 
 export async function POST(req: { json: () => any; }, res: any)  {
@@ -22,9 +23,10 @@ export async function GET(req: any, res: any)  {
     try {
         const appdata = await fsPromises.readFile(`public/appdata.json`);
         let appdatajson = await JSON.parse(appdata);
-        return NextResponse.json({output: appdatajson.current_page})
+        return NextResponse.json({output: appdatajson.current_page?appdatajson.current_page:1})
     }
     catch (error) {
+        console.log(error)
         return NextResponse.json({output: 1})
     }
 }

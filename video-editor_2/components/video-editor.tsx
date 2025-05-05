@@ -3,10 +3,12 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, use } from "react"
-import { ChevronRight, Scissors, RotateCcw, RotateCw, Eye, Video, Volume, Trash } from "lucide-react"
+import { ChevronRight, Scissors, RotateCcw, RotateCw, Eye, Video, Volume, Trash, PlayCircleIcon, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AudioPlayer from 'react-h5-audio-player';
 import ReactPlayer from 'react-player';
+import { Item } from "@radix-ui/react-accordion"
+import next from "next"
 
 interface VideoEditorProps {
   onCancel?: () => void
@@ -15,6 +17,10 @@ interface VideoEditorProps {
 interface TimelineItem {
   id: string
   name: string
+  source:string
+  duration: number
+  trim_start: number
+  trim_end: number
   position: number
   width: number
   type: string
@@ -26,9 +32,26 @@ interface Track {
   icon: JSX.Element
   items: TimelineItem[]
 }
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+
+  const hh = h.toString().padStart(2, '0');
+  const mm = m.toString().padStart(2, '0');
+  const ss = s.toString().padStart(2, '0');
+
+  return `${hh}:${mm}:${ss}`;
+}
 
 export default function VideoEditor({ onCancel }: VideoEditorProps) {
+  const pxPerSecond = 16;
+  const lastFrameTime = useRef(0);
+  const frameRef = useRef();
+  const [previewPlay, setPreviewPlay] = useState(false);
   const [currentTime, setCurrentTime] = useState("00:00")
+  const [numericCurrentTime, setNumericCurrentTime] = useState(0);
+  const [numericTotalTime, setNumericTotalTime] = useState(0);
   const [totalTime, setTotalTime] = useState("12:03")
   const [draggingItem, setDraggingItem] = useState<any>(null)
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
@@ -37,7 +60,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     trackId: null,
     itemId: null,
   })
-
+  const [totalAudioDuration, setTotalAudioDuration] = useState(0);
   const [outputURL, setOutputURL] = useState("");
 
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -50,6 +73,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
   const [is_data_loaded, setDataLoaded] = useState(false)
   const [resources, setResources] = useState([])
+  const [imageTrackResources, setImageTrackResources] = useState([]);
+  const [subtitleTrackResources, setSubtitleTrackResources] = useState([]);
+  const [voiceTrackResources, setVoiceTrackResources] = useState([]);
   const [display_item, setDisplayItem] = useState(null)
 
   // Reference to track containers for position calculations
@@ -60,6 +86,12 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     {
       id: 1,
       type: "subtitle",
+      icon: <Eye />,
+      items: [],
+    },
+    {
+      id: 2,
+      type: "overlay",
       icon: <Eye />,
       items: [],
     },
@@ -80,14 +112,13 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   useEffect(() => {
     const onLoadAssets = async () => {
       if (is_data_loaded) return;
-
       const response = await fetch('/api/project_init/save_resources', {
         method: 'GET',
         headers: {
           'Content-type': 'application/json'
         }
       })
-
+      let totalDuration = 0.0;
       if (response.ok){
         const data = await response.json();
         const resource_array = data.output;
@@ -98,41 +129,70 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         let timeLineAudio = [];
 
         resource_array.forEach(items => {
+          totalDuration += items.original_duration;
           if (items.type === "subtitle"){
             timeLineSubtitles.push({
               id: timeLineSubtitles.length + 1,
               name: items.name,
-              position: timeLineSubtitles.length * 80,
-              width: 80,
+              source: items.source,
+              duration: items.orginal_duration + 0,
+              trim_start: 0,
+              trim_end: items.original_duration,
+              position: (timeLineSubtitles.length > 0? timeLineSubtitles[timeLineSubtitles.length - 1].position + timeLineSubtitles[timeLineSubtitles.length - 1].width: 0),
+              width: (items.original_duration+1) * pxPerSecond,
               type: "subtitle"
             })
+
           }
           else if (items.type === "image"){
             timeLineImages.push({
               id: timeLineImages.length + 1,
               name: items.name,
-              position: timeLineImages.length * 80,
-              width: 80,
-              type: "subtitle"
+              source: items.source,
+              duration: items.original_duration*1,
+              trim_start: 0,
+              trim_end: items.original_duration,
+              position: (timeLineImages.length > 0? timeLineImages[timeLineImages.length - 1].position + timeLineImages[timeLineImages.length - 1].width: 0),
+              width: (items.original_duration+1) * pxPerSecond,
+              type: "image"
             })
+    
+
           }
           else if (items.type === "audio"){
             timeLineAudio.push({
               id: timeLineAudio.length + 1,
               name: items.name,
-              position: timeLineAudio.length * 80,
-              width: 80,
-              type: "subtitle"
+              source: items.source,
+              duration: items.orginal_duration*1,
+              trim_start: 0,
+              trim_end: items.original_duration,
+              position: (timeLineAudio.length > 0? timeLineAudio[timeLineAudio.length - 1].position + timeLineAudio[timeLineAudio.length - 1].width: 0),
+              width: (items.original_duration+1) * pxPerSecond,
+              type: "audio"
             })
+
           }
         })
-
+        console.log(totalDuration)
+        setTotalAudioDuration(totalDuration)
+        setNumericTotalTime(totalDuration)
+        setTotalTime(formatTime(totalDuration))
+        setImageTrackResources(timeLineImages);
+        setSubtitleTrackResources(timeLineSubtitles);
+        setVoiceTrackResources(timeLineAudio);
         setTracks([
           {
             id: 1,
             type: "subtitle",
             icon: <Eye />,
             items: timeLineSubtitles,
+          },
+          {
+            id: 2,
+            type: "overlay",
+            icon: <Eye />,
+            items: [],
           },
           {
             id: 3,
@@ -145,7 +205,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             type: "audio",
             icon: <Eye />,
             items: timeLineAudio,
-          }]
+          },]
         );
 
         setDataLoaded(true)
@@ -156,25 +216,59 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
     return
   }, [])
+  
+  // Animation for playhead
+  useEffect(() => {
+    if (!previewPlay) return;
+  
+    lastFrameTime.current = performance.now(); // reset time to avoid jump
+  
+    const tick = (now) => {
+      const delta = (now - lastFrameTime.current) / 1000;
+      lastFrameTime.current = now;
+      setNumericCurrentTime(t => t + delta);
+      setCurrentTime(formatTime(numericCurrentTime))
+      frameRef.current = requestAnimationFrame(tick);
+    };
+  
+    frameRef.current = requestAnimationFrame(tick);
+  
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [previewPlay]);
 
-  // // Sample video resources
-  // const resources = [
-  //   { id: 1, name: "video_name.mp4", type: "video" },
-  //   { id: 2, name: "video3.mp4", type: "video" },
-  //   { id: 3, name: "video3.mp4", type: "video" },
-  //   { id: 4, name: "video_name.mp4", type: "video" },
-  //   { id: 5, name: "video3.mp4", type: "video" },
-  //   { id: 6, name: "video3.mp4", type: "video" },
-  //   { id: 7, name: "audio_1.wav", type: "audio" },
-  //   { id: 8, name: "subtitle.txt", type: "subtitle" },
-  //   { id: 9, name: "overlay.mp4", type: "overlay" },
-  // ]
-
+  useEffect(() => {
+    tracks[2].items.forEach((item : TimelineItem) =>{
+      if (numericCurrentTime >= item.position/pxPerSecond && numericCurrentTime <= item.position/pxPerSecond + item.trim_end){
+        const playingTime = (numericCurrentTime*pxPerSecond - item.position)/pxPerSecond;
+        console.log("On play:", playingTime)
+        if (playingTime < item.duration) 
+          console.log("Source", item.source)
+      }
+      
+    })
+  }, [numericCurrentTime])
   // Function to check if two items overlap
   const checkOverlap = (item1: TimelineItem, item2: TimelineItem) => {
     return item1.position < item2.position + item2.width && item1.position + item1.width > item2.position
   }
-
+  const saveProjectProperties = async ()=>{
+     const response = await fetch("/api/video_editor/timelines", {
+      method: 'POST',
+      headers:{
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        profile: tracks
+      })
+     })
+     if (response.ok){
+      const res = await response.json()
+        console.log(res)}
+      else{
+        const res = await response.json()
+        console.log(res)
+      }
+  }
   // Function to find a valid position for an item that doesn't overlap with others
   const findValidPosition = (trackId: number, item: TimelineItem, currentPosition: number) => {
     const track = tracks.find((t) => t.id === trackId)
@@ -499,13 +593,20 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         <div>
           {topBarProgress}
         </div>
-        <Button variant="outline" className="flex items-center gap-2" onClick={onExportVideo}>
-          Xuất bản <ChevronRight className="h-4 w-4" />
-        </Button>
+        <div className="flex flex-row">
+          <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectProperties}>
+              Lưu dự án <Save className="h-4 w-4" />
+            </Button>
+          <Button variant="outline" className="flex items-center gap-2" onClick={onExportVideo}>
+            Xuất bản <ChevronRight className="h-4 w-4" />
+          </Button>
+          
+        </div>
+       
       </div>
 
       {/* Main content */}
-      <div className="flex grid grid-cols-3 border-b h-100 max-h-100">
+      <div className="grid grid-cols-3 border-b h-100 max-h-100">
         {/* Resources panel */}
         <div className="border-r p-4 ">
           <div className="flex justify-between items-center mb-4 max-h-80">
@@ -543,26 +644,26 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           <h2 className="font-medium text-lg mb-4">Trình phát</h2>
 
 
-          <div className="flex flex-col h-[calc(100%-6rem)]">
-            <ReactPlayer url={outputURL} width="100%" controls={true}/>
+          <div className="flex flex-col h-full]">
+            {/* <ReactPlayer url={outputURL} width="100%" controls={true}/> */}
+            <canvas className="bg-gray-500 w-full"/>
             <div className="flex justify-between items-center">
-              {/*<div className="flex gap-2">*/}
-                {/*<Button variant="ghost" size="icon">*/}
-                {/*  <ChevronRight className="h-5 w-5 rotate-180" />*/}
-                {/*</Button>*/}
-                {/*<Button variant="ghost" size="icon">*/}
-                {/*  <span className="h-5 w-5 flex items-center justify-center">⏸️</span>*/}
-                {/*</Button>*/}
-                {/*<Button variant="ghost" size="icon">*/}
-                {/*  <ChevronRight className="h-5 w-5" />*/}
-                {/*</Button>*/}
-                {/*<Button variant="ghost" size="icon">*/}
-                {/*  <ChevronRight className="h-5 w-5 ml-1" />*/}
-                {/*</Button>*/}
-              {/*</div>*/}
-              {/*<div className="text-sm">*/}
-              {/*  {currentTime}/{totalTime}*/}
-              {/*</div>*/}
+              <div className="flex gap-2">
+                <Button variant="ghost" size="icon">
+                 <ChevronRight className="h-5 w-5 rotate-180" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={e => setPreviewPlay(!previewPlay)}>
+                 <span className="h-5 w-5 flex items-center justify-center">⏸
+                  <PlayCircleIcon className="h-5 w-5"></PlayCircleIcon>
+                 </span>
+                </Button>
+                <Button variant="ghost" size="icon">
+                 <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
+              <div className="text-sm">
+               {numericCurrentTime}/{totalTime}
+              </div>
             </div>
           </div>
         </div>
@@ -595,36 +696,75 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       </div>
 
       {/* Timeline */}
-      <div className="flex flex-col">
-        {/* Timeline toolbar */}
-        <div className="flex items-center border-b p-2 gap-4">
-          <Scissors className="h-5 w-5" />
-          <div className="border-r h-6 mx-2"></div>
-          <Button variant="ghost" size="icon">
-            <RotateCcw className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <RotateCw className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* Timeline ruler */}
-        <div className="flex border-b max-w-full">
-          <div className="w-60 border-r flex-shrink-0"></div>
-          <div className="flex min-w-[800px] overflow-scroll">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="w-[50px] flex items-center justify-center border-r text-sm py-2">
-                {i + 1}
-              </div>
-            ))}
+      <div className="flex flex-row">
+        {/* Timeline toolbar and left panel*/}
+        <div id="toolbar-leftpanel" className="flex flex-col">
+          <div className="flex items-center border-b p-2 gap-4">
+            <Scissors className="h-5 w-5" />
+            <div className="border-r h-6 mx-2"></div>
+            <Button variant="ghost" size="icon">
+              <RotateCcw className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <RotateCw className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-2">
+                      <span className="text-xl">T</span>
+                      <Eye className="h-5 w-5" />
+                    </div>        
+          </div>
+          <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-2">
+                      <span className="text-xl"></span>
+                      <Eye className="h-5 w-5" />
+                    </div>        
+          </div>
+          <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-2">
+                      <span className="text-xl"></span>
+                      <Eye className="h-5 w-5" />
+                    </div>        
+          </div>
+          <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-2">
+                      <span className="text-xl"></span>
+                      <Eye className="h-5 w-5" />
+                    </div>        
           </div>
         </div>
+        
 
         {/* Timeline tracks */}
-        <div className="flex-1 overflow-x-auto">
+        <div className="flex-1 min-w-[800px] max-w-full overflow-x-scroll relative">
+          <div
+            id="playhead"
+            className="playhead"
+            style={{
+              opacity: '0.5',
+              left: `${numericCurrentTime * pxPerSecond}px`,
+              height: '100%',
+              width: '2px',
+              background: 'red',
+              position: 'absolute',
+              zIndex: '10000',
+            }} />
+          {/* Timeline ruler */}
+          <div className="flex border-b max-w-full">
+          
+            {/* <div className="w-60 border-r flex-shrink-0"></div> */}
+            <div className="flex min-w-[800px]">
+              {Array.from({ length: totalAudioDuration }).map((_, i) => (
+                <div key={i} className="w-[16px] min-w-[16px] small flex items-center justify-center border-r text-sm py-2">
+                  {(i) % 10 == 0 ? i  : ""}
+                </div>
+              ))}
+            </div>
+          </div>
           {tracks.map((track) => (
             <div key={track.id} className="flex border-b">
-              <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
+              {/* <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
                 {track.type === "subtitle" ? (
                   <div className="flex items-center gap-2">
                     <span className="text-xl">T</span>
@@ -646,10 +786,10 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                     <Eye className="h-5 w-5" />
                   </div>
                 )}
-              </div>
+              </div> */}
               <div
                 ref={(el) => (trackRefs.current[track.id] = el)}
-                className="flex-1 h-16 relative min-w-[800px] bg-gray-50"
+                className="flex-1 h-16 relative min-w-[800px] max-w-full bg-gray-50"
                 onDragOver={(e) => handleDragOver(e, track.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, track.id)}

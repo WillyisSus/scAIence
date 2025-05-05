@@ -54,7 +54,9 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
 
         return
     }, [])
-
+    // Save to project's resources.json, 
+    // configuring the original resources properties 
+    // (including length for audios and video)
     const saveResources = async () => {
         const response = await fetch('/api/assets_data', {
             method: 'GET',
@@ -68,11 +70,24 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
             const data = await response.json();
             let id = 0;
             data.output.forEach((e: any) => {
-                resource_array.push({id: id, name: `image_${id}`, source: e.image_url, type: "image"});
+                resource_array.push({
+                    id: id, 
+                    name: `image_${id}`, 
+                    source: e.image_url, 
+                    original_duration: e.audio_duration,
+                    type: "image"});
                 id++;
-                resource_array.push({id: id, name: `text_${id - 1}`, source: e.script, type: "subtitle"});
+                resource_array.push({
+                    id: id, name: `text_${id - 1}`, 
+                    source: e.script, 
+                    original_duration: e.audio_duration,
+                    type: "subtitle"});
                 id++;
-                resource_array.push({id: id, name: `sound_${id - 2}`, source: e.audio_url, type: "audio"});
+                resource_array.push({id: id, 
+                    name: `sound_${id - 2}`, 
+                    source: e.audio_url, 
+                    original_duration: e.audio_duration,
+                    type: "audio"});
                 id++;
             })
 
@@ -110,7 +125,7 @@ export default function ImageGeneration({ onConfirmImages }: ImageGenerationProp
             {assets.map((asset) => {
 
                 return (
-                <div key={asset.asset_id} className="border rounded-lg py-2 pl-2 mb-2">
+                <div id={"asset_" + asset.asset_id} key={asset.asset_id} className="border rounded-lg py-2 pl-2 mb-2">
                     <div className="bg-white w-full rounded flex items-center justify-center text-xs">
                         <div className="grid grid-flow-row w-full gap-4">
                             <div className="flex-1 grid grid-cols-4 border-b">
