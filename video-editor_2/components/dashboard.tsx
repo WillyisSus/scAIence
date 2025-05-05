@@ -98,6 +98,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   }
 
   const selectProject = async (selectedProjectName : string) => {
+    console.log(selectedProjectName);
     const response = await fetch('/api/project_init/select_index', {
       method: 'POST',
       headers: {

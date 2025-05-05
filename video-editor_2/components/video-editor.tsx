@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, use } from "react"
 import { ChevronRight, Scissors, RotateCcw, RotateCw, Eye, Video, Volume, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AudioPlayer from 'react-h5-audio-player';
@@ -37,13 +37,15 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     trackId: null,
     itemId: null,
   })
+
+  const [outputURL, setOutputURL] = useState("");
+
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [isDraggingTimeline, setIsDraggingTimeline] = useState(false)
   const [draggedItemInfo, setDraggedItemInfo] = useState<{ trackId: number | null; itemId: string | null }>({
     trackId: null,
     itemId: null,
   })
-
   const [topBarProgress, setTopBarProgress] = useState("")
 
   const [is_data_loaded, setDataLoaded] = useState(false)
@@ -471,7 +473,11 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           'Content-type' : 'application/json'
         }
       })
-
+      if (response.ok){
+        const returnPackage = await response.json();
+        console.log(returnPackage.output);
+        setOutputURL(returnPackage.output);
+      }
       setTopBarProgress("Xuất bản thành công.")
 
     } catch (error) {
@@ -538,7 +544,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
 
           <div className="flex flex-col h-[calc(100%-6rem)]">
-            <ReactPlayer url={"project2/output_video.mp4"} width="100%" controls={true}/>
+            <ReactPlayer url={outputURL} width="100%" controls={true}/>
             <div className="flex justify-between items-center">
               {/*<div className="flex gap-2">*/}
                 {/*<Button variant="ghost" size="icon">*/}

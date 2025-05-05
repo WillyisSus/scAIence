@@ -2,6 +2,7 @@ import {NextResponse} from "next/server";
 import fsPromises, {readdir, unlink} from "fs/promises";
 import ffmpeg from 'fluent-ffmpeg';
 import path from "node:path";
+import { error } from "node:console";
 const ffmpeg_static = require('ffmpeg-static');
 const fluent_ffmpeg = require('fluent-ffmpeg');
 
@@ -26,7 +27,8 @@ export async function GET(req: any, res: any) {
     const appdata = await fsPromises.readFile(`public/appdata.json`);
     const appdatajson = await JSON.parse(appdata);
     const project_name = appdatajson.current_project;
-
+    const outputURL = "";
+    console.log(project_name?project_name:"bout to kms")
     // prepare
     const images = await readdir(`./public/${project_name}/images`)
     const imageCount = images.filter(image => /^generated_image_\d+\.png$/.test(image)).length
@@ -60,8 +62,8 @@ export async function GET(req: any, res: any) {
                         console.log(`Done ${i}`)
                         resolve()
                     })
-                    .on('error', () => {
-                        console.log(`Error occurred at ${i}`)
+                    .on('error', (e) => {
+                        console.log(`Error occurred at ${e}`)
                         reject()
                     })
                     .run()
@@ -153,7 +155,7 @@ export async function GET(req: any, res: any) {
             console.log('Error deleting files:', e);
         }
     }
-    return NextResponse.json({output: "we good"})
+    return NextResponse.json({output: `${project_name}/output_video.mp4`})
 }
 
 
