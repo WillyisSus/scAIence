@@ -9,11 +9,11 @@ export async function GET(req: Request){
         const project_name = appdatajson.current_project;
     
         const timeline_data = await fsPromises.readFile(`public/${project_name}/timeline_data.json`)
-        return NextResponse.json({output:timeline_data.toString()});
+        console.log(timeline_data?timeline_data:"File not found")
+        return NextResponse.json({output:timeline_data.toString()}, {status: 200});
     }catch(err){
-        console.log(err)
+        return NextResponse.json({err: "File not found"}, {status: 404})
     }
-    return NextResponse.json({output:JSON.stringify({})});
 }
 export async function POST(req: { json: () => any; }, res: any) {
     try{
@@ -21,10 +21,8 @@ export async function POST(req: { json: () => any; }, res: any) {
         const appdata = await fsPromises.readFile(`public/appdata.json`);
         const appdatajson = await JSON.parse(appdata.toString());
         const project_name = appdatajson.current_project;
-        console.log(project_name)
         const assets_data = reqData.profile;
         const save_data = JSON.stringify(assets_data);
-        console.log("WTFISFWMATP:", save_data)
         await fsPromises.writeFile(`public/${project_name}/timeline_data.json`, save_data);
         return NextResponse.json({ output: "we good" })
     }catch(err){
