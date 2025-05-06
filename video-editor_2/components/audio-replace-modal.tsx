@@ -8,7 +8,6 @@ interface ImageItem {
     audio_url: string,
     custom_audio?: File | Blob,
     custom_audio_url?: string,
-    audio_version?: number
 }
 
 interface AudioReplaceModalProps {
@@ -45,12 +44,11 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
         // Update assets
         const updatedAssets = assets.map((asset) =>
             asset.asset_id === selectedAssetId
-                ? { ...asset, custom_audio: tempAudioBlob, custom_audio_url: custom_url, audio_version: Date.now() }
+                ? { ...asset, custom_audio: tempAudioBlob, custom_audio_url: custom_url }
                 : asset
         )
 
-        const saveAssets = updatedAssets.map(({ custom_audio, audio_version, ...rest }) => rest)
-        
+        const saveAssets = updatedAssets.map(({ custom_audio, ...rest }) => rest)
         await fetch('/api/assets_data', {
             method: 'POST',
             headers: {

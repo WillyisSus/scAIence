@@ -10,6 +10,8 @@ require('dotenv').config()
 export default function Home() {
   const [currentInterface, setCurrentInterface] = useState(1) // 1: Dashboard, 2: Content Creation, 3: Video Editor
   const [is_data_loaded, setDataLoaded] = useState(false)
+  const [imageVibe, setImageVibe] = useState("Realistic");
+  const [voiceLanguage, setVoiceLanguage] = useState("en");
 
   useEffect(() => {
     const onLoadAssets = async () => {
@@ -69,13 +71,31 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white">
-      {currentInterface === 1 && <Dashboard onCreateVideo={async () => {await handleCreateVideo()}} onGoToProject={async () => {await confirmImageChanges()}}/>}
+      {currentInterface === 1 && 
+        <Dashboard 
+          onCreateVideo={async () => {await handleCreateVideo()}} 
+          onGoToProject={async () => {await confirmImageChanges()}}
+        />
+      }
 
-      {currentInterface === 2 && (
-        <ContentCreation onApproveAndCreate={async () => {await handleApproveAndCreate()}} onCancel={async () => {await handleCancel()}} />
-      )}
+      {currentInterface === 2 && 
+        <ContentCreation 
+          imageVibe={imageVibe} voiceLanguage={voiceLanguage}
+          setVoiceLanguage={(voiceLanguage) => setVoiceLanguage(voiceLanguage)}
+          setImageVibe={(imageVibe) => setImageVibe(imageVibe)}
+          onApproveAndCreate={async () => {await handleApproveAndCreate()}} 
+          onCancel={async () => {await handleCancel()}} 
+          onContinue={async () => {await handleApproveAndCreate()}} 
+        />
+      }
 
-      {currentInterface === 3 && <ImageGeneration onConfirmImages={async () => {await confirmImageChanges()}}/>}
+      {currentInterface === 3 && 
+        <ImageGeneration 
+          imageVibe={imageVibe} voiceLanguage={voiceLanguage}
+          onBackToContentCreation={async () => {await handleCreateVideo()}}
+          onConfirmImages={async () => {await confirmImageChanges()}}
+        />
+      }
 
       {currentInterface === 4 && <VideoEditor onCancel={async () => {await handleCancel()}} />}
     </main>
