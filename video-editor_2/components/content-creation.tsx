@@ -1,7 +1,7 @@
 "use client"
 import { ChevronDown, Play, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
@@ -9,6 +9,11 @@ import 'react-h5-audio-player/lib/styles.css';
 interface ContentCreationProps {
   onApproveAndCreate: () => void
   onCancel: () => void
+  onContinue: () => void
+  imageVibe: string
+  setImageVibe: (imageVibe: string) => void
+  voiceLanguage: string
+  setVoiceLanguage: (voiceLanguage: string) => void
 }
 
 interface ImageItem {
@@ -22,7 +27,8 @@ interface ImageItem {
   custom_audio_url?: string
 }
 
-export default function ContentCreation({ onApproveAndCreate, onCancel }: ContentCreationProps) {
+export default function ContentCreation({ onApproveAndCreate, onCancel, onContinue, imageVibe, setImageVibe, voiceLanguage, setVoiceLanguage }: ContentCreationProps) {
+  const [assetsExist, setAssetsExist] = useState(false);
 
   const [scriptOutput, setScriptOutput] = useState("");
   const [scriptInput, setScriptInput] = useState("");
@@ -32,8 +38,6 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
 
   const [progress, setProgress] = useState("");
   const [scriptVibe, setScriptVibe] = useState("Casual");
-  const [imageVibe, setImageVibe] = useState("Realistic");
-  const [voiceLanguage, setVoiceLanguage] = useState("en");
   
   const [scriptInputType, setScriptInputType] = useState("manual");
   
@@ -42,6 +46,23 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
     // {asset_id: 1, image_url: "", script: "A pineapple", audio_url: "sounds/output.mp3"},
     // {asset_id: 2, image_url: "", script: "Grapes", audio_url: "sounds/output.mp3"}
   ])
+
+  useEffect(() => {
+    const checkAssets = async () => {
+      const response = await fetch('api/assets_data')
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log("Assets don't exist")
+          setAssetsExist(false)
+        }
+        else
+          console.log("Something wrong happened")
+      } 
+      else
+        setAssetsExist(true)
+    };
+    checkAssets();
+  }, []);
 
 
   const onGenerateContent = async () => {
@@ -254,7 +275,26 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <>
+    <div className="container flex justify-between p-4 border-b">
+        <div>
+          {onCancel && (
+            <Button variant="outline" className="px-6" onClick={onCancel}>
+              Hủy bản phác thảo
+            </Button>
+          )}
+        </div>
+        <div>
+          {assetsExist && (
+            <Button variant="outline" className="px-6" onClick={onContinue}>
+              Đến chỉnh sửa tài nguyên
+            </Button>
+          )}
+        </div>
+    </div>
+
+
+    <div className="container mx-auto py-4 px-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column - Settings */}
         <div className="border rounded-lg p-6">
@@ -437,9 +477,6 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
 
             <div className="flex justify-end gap-4 mt-auto">
               <span className="text-center justify-self-center content-center">{progress}</span>
-              <Button variant="outline" className="px-6" onClick={async () => {}}>
-                Hủy bản phác thảo
-              </Button>
               <Button variant="outline" className="px-6" onClick={async () => {
                 if (scriptOutput.length === 0) {
                   toast.error("Khu vực kịch bản đang trống!")
@@ -466,5 +503,6 @@ export default function ContentCreation({ onApproveAndCreate, onCancel }: Conten
         </div>
         <ToastContainer/>
       </div>
+      </>
   )
 }

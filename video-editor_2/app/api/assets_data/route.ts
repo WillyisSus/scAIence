@@ -30,6 +30,6 @@ export async function GET(req: { json: () => any; }, res: any) {
         return NextResponse.json({ output: assets_data })
     }
     catch (error) {
-        return NextResponse.json({ output: "we aint good" })
+        return NextResponse.json({ output: "we aint good"}, { status: 404 })
     }
 }

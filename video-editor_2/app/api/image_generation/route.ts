@@ -38,10 +38,10 @@ export async function POST(req: { json: () => any; }, res: any) {
             }
         }
 
-
         return NextResponse.json({output: `${project_name}/images/generated_image_${index}.png`})
     }
     catch (error){
+        console.log(error)
         return NextResponse.json({output: null})
     }
 }
