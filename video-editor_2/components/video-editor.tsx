@@ -19,6 +19,7 @@ import {   DndContext,
 import { arrayMove } from "@dnd-kit/sortable"
 import { TrackRow } from "./ui/track-row"
 import { resourceUsage } from "process"
+import { toast, ToastContainer } from "react-toastify"
 
 interface VideoEditorProps {
   onCancel?: () => void
@@ -28,6 +29,7 @@ interface TimelineItem {
   id: string
   name: string
   source:string
+  original_duration: number
   duration: number
   trim_start: number
   trim_end: number
@@ -66,7 +68,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const [previewPlay, setPreviewPlay] = useState(false);
   const [currentTime, setCurrentTime] = useState("00:00")
   const [numericCurrentTime, setNumericCurrentTime] = useState(0);
-  const [numericTotalTime, setNumericTotalTime] = useState(0);
+  const [numericTotalTime, setNumericTotalTime] = useState(1000);
   const [totalTime, setTotalTime] = useState("12:03")
   const [draggingItem, setDraggingItem] = useState<any>(null)
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
@@ -75,7 +77,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     trackId: null,
     itemId: null,
   })
-  const [totalAudioDuration, setTotalAudioDuration] = useState(0);
+  const [totalAudioDuration, setTotalAudioDuration] = useState(1000);
   const [outputURL, setOutputURL] = useState("");
 
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -190,6 +192,44 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     if (activeContainer !== overContainer) return
 
   }
+  function handleTrackItemResize(item, direction, delta){
+    console.log("Resizable stop: ", delta)
+    console.log("Resizable direction: ", direction)
+    item.width = item.width + delta
+    if (direction === "left"){
+      if (item.trim_end - (item.width)/pxPerSecond <= 0){
+        item.trim_start = 0;
+        item.trim_end = item.trim_start + (item.width)/pxPerSecond
+      }else{
+        item.trim_start = item.trim_end - (item.width)/pxPerSecond
+      }
+    }else {
+      item.trim_end = item.trim_start + (item.width)/pxPerSecond
+    }
+    item.duration = item.trim_end - item.trim_start
+    if (item.id.indexOf(trackName.first_track) != -1){
+        const replaceIndex = subtitleTrackResources.findIndex((element) => item.id === element.id)
+        setSubtitleTrackResources((subtitleTrackResources)=>{
+          subtitleTrackResources[replaceIndex] = {...item}
+          return [...subtitleTrackResources]
+        }) 
+        
+    }else if (item.id.indexOf(trackName.second_track) != -1){
+
+    } else if(item.id.indexOf(trackName.third_track) != -1){
+      const replaceIndex = imageTrackResources.findIndex((element) => item.id === element.id)
+      setImageTrackResources((imageTrackResources)=>{
+        imageTrackResources[replaceIndex] = {...item}
+        return [...imageTrackResources]
+      }) 
+    } else if (item.id.indexOf(trackName.fourth_track) != -1) {
+      const replaceIndex = voiceTrackResources.findIndex((element) => item.id === element.id)
+      setVoiceTrackResources((voiceTrackResources)=>{
+        voiceTrackResources[replaceIndex] = {...item}
+        return [...voiceTrackResources]
+      }) 
+    }
+  }
   // Drag drop in track
   useEffect(() => {
     const onLoadAssets = async () => {
@@ -249,33 +289,37 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         if (response.ok){
           const data = await response.json()
           const resource_array = data.output;
+          console.log(resource_array)
           let timeLineSubtitles = [];
           let timeLineImages = [];
           let timeLineAudio = [];
           resource_array.forEach(items => {
-            
+            const newItem = {...items}
+            console.log(newItem)
             if (items.type === "subtitle"){
               timeLineSubtitles.push({
-                id: items.type + "_" + timeLineSubtitles.length + 1,
-                name: items.name,
-                source: items.source,
-                duration: items.orginal_duration + 0,
+                id: newItem.type + "_" + timeLineSubtitles.length + 1,
+                name: newItem.name,
+                source: newItem.source,
+                original_duration: newItem.original_duration*1,
+                duration: newItem.original_duration*1,
                 trim_start: 0,
-                trim_end: items.original_duration,
-                width: (items.original_duration+1) * pxPerSecond,
+                trim_end: newItem.original_duration,
+                width: (newItem.original_duration+1) * pxPerSecond,
                 type: "subtitle"
               })
     
             }
             else if (items.type === "image"){
               timeLineImages.push({
-                id: items.type + "_" + timeLineImages.length + 1,
-                name: items.name,
-                source: items.source,
-                duration: items.original_duration*1,
+                id: newItem.type + "_" + timeLineImages.length + 1,
+                name: newItem.name,
+                source: newItem.source,
+                original_duration: newItem.original_duration*1,
+                duration: newItem.original_duration*1,
                 trim_start: 0,
-                trim_end: items.original_duration,
-                width: (items.original_duration+1) * pxPerSecond,
+                trim_end: newItem.original_duration,
+                width: (newItem.original_duration+1) * pxPerSecond,
                 type: "image"
               })
       
@@ -283,13 +327,14 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             }
             else if (items.type === "audio"){
               timeLineAudio.push({
-                id: items.type + "_" + timeLineAudio.length + 1,
-                name: items.name,
-                source: items.source,
-                duration: items.orginal_duration*1,
+                id: newItem.type + "_" + timeLineAudio.length + 1,
+                name: newItem.name,
+                source: newItem.source,
+                original_duration: newItem.original_duration*1,
+                duration: newItem.original_duration*1,
                 trim_start: 0,
-                trim_end: items.original_duration,
-                width: (items.original_duration+1) * pxPerSecond,
+                trim_end: newItem.original_duration,
+                width: (newItem.original_duration+1) * pxPerSecond,
                 type: "audio"
               })
     
@@ -306,23 +351,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     return
   }, [])
   // Animation for playhead
-  useEffect(() => {
-    if (!previewPlay) return;
-  
-    lastFrameTime.current = performance.now(); // reset time to avoid jump
-  
-    const tick = (now) => {
-      const delta = (now - lastFrameTime.current) / 1000;
-      lastFrameTime.current = now;
-      setNumericCurrentTime(t => t + delta);
-      setCurrentTime(formatTime(numericCurrentTime))
-      frameRef.current = requestAnimationFrame(tick);
-    };
-  
-    frameRef.current = requestAnimationFrame(tick);
-  
-    return () => cancelAnimationFrame(frameRef.current);
-  }, [previewPlay]);
+
 
   // useEffect(() => {
   //   tracks[2].items.forEach((item : TimelineItem) =>{
@@ -340,41 +369,56 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     return item1.position < item2.position + item2.width && item1.position + item1.width > item2.position
   }
   const saveProjectProperties = async ()=>{
-      const response = await fetch("/api/video_editor/timelines", {
-      method: 'POST',
-      headers:{
-        'Content-type': 'application/json'
+
+
+    const response = await fetch("/api/video_editor/timelines", {
+    method: 'POST',
+    headers:{
+      'Content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      profile: [ {
+        type: trackName.first_track,
+        items: subtitleTrackResources,
       },
-      body: JSON.stringify({
-        profile: [ {
-          type: trackName.first_track,
-          items: subtitleTrackResources,
-        },
-        {
-          type: trackName.second_track,
-          items: [],
-        },
-        {
-          type: trackName.third_track,
-          items: imageTrackResources,
-        },
-        {
-          type: trackName.fourth_track,
-          items: voiceTrackResources,
-        }]
-      })
-     })
-     if (response.ok){
+      {
+        type: trackName.second_track,
+        items: [],
+      },
+      {
+        type: trackName.third_track,
+        items: imageTrackResources,
+      },
+      {
+        type: trackName.fourth_track,
+        items: voiceTrackResources,
+      }]
+    })
+    })
+    if (response.ok){
+      toast.success("Đã lưu dự án")
+
       const res = await response.json()
-        console.log(res)}
-      else{
-        const res = await response.json()
-        console.log(res)
-      }
+      console.log(res)}
+    else{
+      toast.error("Không thể lưu dự án")
+      const res = await response.json()
+      console.log(res)
+    }
   }
 
   const saveProjectAndShowPreview = async ()=>{
-      await saveProjectProperties()
+      await saveProjectProperties().then()
+      let totalFirstTrack = 0;
+      let totalThirdTrack = 0;
+      let totalFourthTrack = 0
+      subtitleTrackResources.forEach((el) => totalFirstTrack += el.duration)
+      imageTrackResources.forEach((el) => totalThirdTrack += el.duration)
+      voiceTrackResources.forEach((el) => totalFourthTrack += el.duration)
+      if (!(totalFirstTrack == totalFourthTrack && totalFirstTrack == totalThirdTrack)){
+        toast.warning("Độ dài các timeline không bằng nhau")
+        return
+      }
       const response = await fetch("/api/video_editor/preview", {
         method: 'GET',
         headers: {
@@ -418,246 +462,6 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
   }
 
-  // Handle drag start from resources panel
-  // const handleDragStart = (e: React.DragEvent, resource: any) => {
-  //   e.dataTransfer.setData("application/json", JSON.stringify(resource))
-  //   setDraggingItem(resource)
-  //   // Create a ghost image for dragging
-  //   const ghostElement = document.createElement("div")
-  //   ghostElement.classList.add("bg-primary", "text-white", "p-2", "rounded", "text-sm")
-  //   ghostElement.textContent = resource.name
-  //   document.body.appendChild(ghostElement)
-  //   e.dataTransfer.setDragImage(ghostElement, 0, 0)
-  //   setTimeout(() => {
-  //     document.body.removeChild(ghostElement)
-  //   }, 0)
-
-
-  //   console.log("Dragging 1")
-  // }
-
-  // // Handle drag over on timeline tracks
-  // const handleDragOver = (e: React.DragEvent, trackId: number) => {
-  //   e.preventDefault()
-  //   e.currentTarget.classList.add("bg-primary/10")
-  // }
-
-  // // Handle drag leave on timeline tracks
-  // const handleDragLeave = (e: React.DragEvent) => {
-  //   e.preventDefault()
-  //   e.currentTarget.classList.remove("bg-primary/10")
-  // }
-
-  // // Handle drop on timeline tracks - now adds at horizontal position
-  // const handleDrop = (e: React.DragEvent, trackId: number) => {
-  //   e.preventDefault()
-  //   e.currentTarget.classList.remove("bg-primary/10")
-
-  //   try {
-  //     // If we're dropping a new resource from the panel
-  //     if (!isDraggingTimeline) {
-  //       const resourceData = JSON.parse(e.dataTransfer.getData("application/json"))
-  //       const trackRect = e.currentTarget.getBoundingClientRect()
-  //       const dropPosition = e.clientX - trackRect.left + e.currentTarget.scrollLeft
-
-  //       // Create the new item
-  //       const newItem: TimelineItem = {
-  //         id: `${resourceData.type}-${Date.now()}`, // Generate unique ID
-  //         name: resourceData.name,
-  //         position: dropPosition,
-  //         width: 80, // Random width between 80-130px
-  //         type: resourceData.type,
-  //       }
-
-  //       // Find a valid position that doesn't overlap
-  //       const validPosition = findValidPosition(trackId, newItem, dropPosition)
-  //       newItem.position = validPosition
-
-  //       // Update the track items - adding at the valid position
-  //       const updatedTracks = tracks.map((track) => {
-  //         if (track.id === trackId) {
-  //           // Make sure we're dropping the right type of resource on the right track
-  //           if (
-  //             (track.type === "image" && resourceData.type === "image") ||
-  //             (track.type === "audio" && resourceData.type === "audio") ||
-  //             (track.type === "subtitle" && resourceData.type === "subtitle")
-  //           ) {
-  //             return {
-  //               ...track,
-  //               items: [...track.items, newItem],
-  //             }
-  //           }
-  //         }
-  //         return track
-  //       })
-
-  //       setTracks(updatedTracks)
-  //     }
-  //     // If we're moving an existing item on the timeline
-  //     else if (draggedItemInfo.trackId !== null && draggedItemInfo.itemId !== null) {
-  //       const sourceTrackId = draggedItemInfo.trackId
-  //       const itemId = draggedItemInfo.itemId
-
-  //       // Only allow dropping on the same track type
-  //       const sourceTrack = tracks.find((t) => t.id === sourceTrackId)
-  //       const targetTrack = tracks.find((t) => t.id === trackId)
-
-  //       if (sourceTrack && targetTrack && sourceTrack.type === targetTrack.type) {
-  //         const item = sourceTrack.items.find((i) => i.id === itemId)
-
-  //         if (item) {
-  //           const trackRect = e.currentTarget.getBoundingClientRect()
-  //           const dropPosition = e.clientX - trackRect.left + e.currentTarget.scrollLeft - dragOffset.x
-
-  //           // Find a valid position that doesn't overlap
-  //           const validPosition = findValidPosition(trackId, item, dropPosition)
-
-  //           // Update the tracks
-  //           const updatedTracks = tracks.map((track) => {
-  //             // Remove from source track
-  //             if (track.id === sourceTrackId) {
-  //               return {
-  //                 ...track,
-  //                 items: track.items.filter((i) => i.id !== itemId),
-  //               }
-  //             }
-  //             // Add to target track
-  //             if (track.id === trackId) {
-  //               const updatedItem = { ...item, position: validPosition }
-  //               return {
-  //                 ...track,
-  //                 items: [...track.items, updatedItem],
-  //               }
-  //             }
-  //             return track
-  //           })
-
-  //           setTracks(updatedTracks)
-  //         }
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error dropping item:", error)
-  //   }
-
-  //   // Reset dragging state
-  //   setIsDraggingTimeline(false)
-  //   setDraggedItemInfo({ trackId: null, itemId: null })
-  //   // setDraggingItem(null)
-  // }
-
-  // // Handle mouse down on timeline items for dragging
-  // const handleTimelineItemMouseDown = (e: React.MouseEvent, trackId: number, itemId: string) => {
-  //   e.preventDefault()
-
-  //   // Find the item
-  //   const track = tracks.find((t) => t.id === trackId)
-  //   if (!track) return
-
-  //   const item = track.items.find((i) => i.id === itemId)
-  //   if (!item) return
-
-  //   // Calculate offset within the item where the mouse was clicked
-  //   const itemElement = e.currentTarget as HTMLElement
-  //   const itemRect = itemElement.getBoundingClientRect()
-  //   const offsetX = e.clientX - itemRect.left
-
-  //   setDragOffset({ x: offsetX, y: 0 })
-  //   setIsDraggingTimeline(true)
-  //   setDraggedItemInfo({ trackId, itemId })
-
-  //   // Add event listeners for mouse move and mouse up
-  //   document.addEventListener("mousemove", handleMouseMove)
-  //   document.addEventListener("mouseup", handleMouseUp)
-  //   console.log(trackId + " " + itemId)
-  // }
-
-  // // Handle mouse move during timeline item drag
-  // const handleMouseMove = (e: MouseEvent) => {
-  //   if (!isDraggingTimeline || draggedItemInfo.trackId === null || draggedItemInfo.itemId === null) return
-
-  //   const trackId = draggedItemInfo.trackId
-  //   const itemId = draggedItemInfo.itemId
-
-  //   // Find the track and item
-  //   const track = tracks.find((t) => t.id === trackId)
-  //   if (!track) return
-
-  //   const trackElement = trackRefs.current[trackId]
-  //   if (!trackElement) return
-
-  //   const trackRect = trackElement.getBoundingClientRect()
-  //   const item = track.items.find((i) => i.id === itemId)
-  //   if (!item) return
-
-  //   // Calculate new position
-  //   const newPosition = e.clientX - trackRect.left - dragOffset.x + trackElement.scrollLeft
-
-  //   // Find a valid position that doesn't overlap with other items
-  //   const validPosition = findValidPosition(trackId, item, newPosition)
-
-  //   // Update the item position
-  //   const updatedTracks = tracks.map((t) => {
-  //     if (t.id === trackId) {
-  //       return {
-  //         ...t,
-  //         items: t.items.map((i) => {
-  //           if (i.id === itemId) {
-  //             return { ...i, position: validPosition }
-  //           }
-  //           return i
-  //         }),
-  //       }
-  //     }
-  //     return t
-  //   })
-
-  //   setTracks(updatedTracks)
-  // }
-
-  // // Handle mouse up after timeline item drag
-  // const handleMouseUp = () => {
-  //   setIsDraggingTimeline(false)
-  //   setDraggedItemInfo({ trackId: null, itemId: null })
-  //   setDraggingItem(null)
-
-  //   // Remove event listeners
-  //   document.removeEventListener("mousemove", handleMouseMove)
-  //   document.removeEventListener("mouseup", handleMouseUp)
-  // }
-
-  // // Handle right click on timeline items
-  // const handleContextMenu = (e: React.MouseEvent, trackId: number, itemId: string) => {
-  //   e.preventDefault()
-  //   setContextMenuPosition({ x: e.clientX, y: e.clientY })
-  //   setSelectedItem({ trackId, itemId })
-  //   setShowContextMenu(true)
-  // }
-
-  // // Handle delete item
-  // const handleDeleteItem = () => {
-  //   if (selectedItem.trackId !== null && selectedItem.itemId !== null) {
-  //     const updatedTracks = tracks.map((track) => {
-  //       if (track.id === selectedItem.trackId) {
-  //         let temp = track.items.filter((item) => item.id !== selectedItem.itemId);
-  //         let track_length = 0;
-  //         for (let i = 0; i < temp.length; i++){
-  //           temp[i].position = track_length;
-  //           track_length += temp[i].width;
-  //         }
-  //         return {
-  //           ...track,
-  //           items: temp,
-  //         }
-  //       }
-  //       return track
-  //     })
-
-  //     setTracks(updatedTracks)
-  //   }
-
-  //   setShowContextMenu(false)
-  // }
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -678,6 +482,18 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   }
 
   const onExportVideo = async () => {
+    await saveProjectProperties().then()
+    let totalFirstTrack = 0;
+    let totalThirdTrack = 0;
+    let totalFourthTrack = 0
+    subtitleTrackResources.forEach((el) => totalFirstTrack += el.duration)
+    imageTrackResources.forEach((el) => totalThirdTrack += el.duration)
+    voiceTrackResources.forEach((el) => totalFourthTrack += el.duration)
+    if (!(totalFirstTrack == totalFourthTrack && totalFirstTrack == totalThirdTrack)){
+      toast.warning("Độ dài các timeline không bằng nhau")
+      return
+    }
+
     setTopBarProgress("Đang xuất bản...")
     try {
       const response = await fetch("/api/compile_video", {
@@ -859,19 +675,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         
 
         {/* Timeline tracks */}
-        <div className="flex-1 min-w-[800px] max-w-full overflow-x-scroll relative">
-          <div
-            id="playhead"
-            className="playhead"
-            style={{
-              opacity: '0.5',
-              left: `${numericCurrentTime * pxPerSecond}px`,
-              height: '100%',
-              width: '2px',
-              background: 'red',
-              position: 'absolute',
-              zIndex: '10000',
-            }} />
+        <div className="flex-1 min-w-[800px] max-w-full bg-gray-50 overflow-x-scroll relative">
+        
           {/* Timeline ruler */}
           <div className="flex border-b max-w-full">
           
@@ -892,19 +697,23 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             onDragOver={handleDragOver}>
             <TrackRow
                 id={trackName.first_track}
-                tasks={subtitleTrackResources}>
+                tasks={subtitleTrackResources}
+                onResizeItem={handleTrackItemResize}>
               </TrackRow>
             <TrackRow
                 id={trackName.second_track}
-                tasks={[]}>
+                tasks={[]}
+                onResizeItem={handleTrackItemResize}>
               </TrackRow>
             <TrackRow
                 id={trackName.third_track}
-                tasks={imageTrackResources}>
+                tasks={imageTrackResources}
+                onResizeItem={handleTrackItemResize}>
               </TrackRow>
             <TrackRow
                   id={trackName.fourth_track}
-                  tasks={voiceTrackResources}>
+                  tasks={voiceTrackResources}
+                  onResizeItem={handleTrackItemResize}>
               </TrackRow>
             
           </DndContext>
@@ -930,6 +739,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           </div>
         </div>
       )}
+      <ToastContainer autoClose={2000} position="bottom-center"/>
     </div>
   )
 }
