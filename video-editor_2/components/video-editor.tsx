@@ -97,6 +97,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const [voiceTrackResources, setVoiceTrackResources] = useState([]);
   const [display_item, setDisplayItem] = useState(null)
 
+  const [outputQuality, setOutputQuality] = useState(1);
+
   // Reference to track containers for position calculations
   const trackRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
 
@@ -668,19 +670,26 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         <div>
           {topBarProgress}
         </div>
-        <div className="flex flex-row">
+        <div className="flex flex-row gap-2">
           <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectProperties}>
-              Lưu dự án <Save className="h-4 w-4" />
-            </Button>
-          <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectAndShowPreview}>
-              Xem trước <PlayIcon className="h-4 w-4" />
-            </Button>
-          <Button variant="outline" className="flex items-center gap-2" onClick={onExportVideo}>
-            Xuất bản <ArrowRightFromLine className="h-4 w-4" />
+            Lưu dự án <Save className="h-4 w-4"/>
           </Button>
-          
+          <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectAndShowPreview}>
+            Xem trước <PlayIcon className="h-4 w-4"/>
+          </Button>
+          <select className="w-full p-2 border border-black rounded pr-10" onChange={event => {
+            setOutputQuality(event.target.value)
+          }} value={outputQuality}>
+            <option value={1}>Low</option>
+            <option value={2}>Medium</option>
+            <option value={3}>High</option>
+          </select>
+          <Button variant="outline" className="flex items-center gap-2" onClick={onExportVideo}>
+            Xuất bản <ArrowRightFromLine className="h-4 w-4"/>
+          </Button>
+
         </div>
-       
+
       </div>
 
       {/* Main content */}
