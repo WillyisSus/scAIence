@@ -38,7 +38,7 @@ export const TrackRowItem = ({ id, item, onResizeStop}) => {
           bottomRight:false,
           bottomLeft:false, 
           topLeft:false }}
-        maxWidth={item.type === "audio" ? (item.original_duration+1)*16 : undefined}
+        maxWidth={item.type === "audio" ? (item.original_duration)*16 : undefined}
         minWidth={48}
         onResizeStart={handleOnResizeStart}
         onResizeStop={handleOnResizeStop}

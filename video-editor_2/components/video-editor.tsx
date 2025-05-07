@@ -305,7 +305,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 duration: newItem.original_duration*1,
                 trim_start: 0,
                 trim_end: newItem.original_duration,
-                width: (newItem.original_duration+1) * pxPerSecond,
+                width: (newItem.original_duration) * pxPerSecond,
                 type: "subtitle"
               })
     
@@ -319,7 +319,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 duration: newItem.original_duration*1,
                 trim_start: 0,
                 trim_end: newItem.original_duration,
-                width: (newItem.original_duration+1) * pxPerSecond,
+                width: (newItem.original_duration) * pxPerSecond,
                 type: "image"
               })
       
@@ -334,7 +334,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 duration: newItem.original_duration*1,
                 trim_start: 0,
                 trim_end: newItem.original_duration,
-                width: (newItem.original_duration+1) * pxPerSecond,
+                width: (newItem.original_duration) * pxPerSecond,
                 type: "audio"
               })
     
