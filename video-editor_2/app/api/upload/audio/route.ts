@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import fsPromises, { writeFile } from 'fs/promises';
+import fsPromises from 'fs/promises';
 import path from 'path';
 
 export async function POST(req: Request) {
@@ -15,13 +15,16 @@ export async function POST(req: Request) {
     const appdatajson = await JSON.parse(appdata.toString());
     const project_name = appdatajson.current_project;
 
-    const buffer = Buffer.from(await (file as Blob).arrayBuffer());
-    const filePath = path.join(process.cwd(), `public/${project_name}/sounds`, `custom_audio_${assetId}.webm`);
+    const resourceLocation = `${project_name}/sounds`;
+    const fileName = `custom_audio_${assetId}.webm`;
 
-    await writeFile(filePath, buffer);
+    const buffer = Buffer.from(await (file as Blob).arrayBuffer());
+    const filePath = path.join(process.cwd(), `public/${resourceLocation}`, fileName);
+
+    await fsPromises.writeFile(filePath, buffer);
 
     return NextResponse.json({
         message: 'Audio saved successfully', 
-        audio_path: path.join(`${project_name}/sounds`, `custom_audio_${assetId}.webm`)
+        audio_path: path.join(resourceLocation, fileName)
     });
 }

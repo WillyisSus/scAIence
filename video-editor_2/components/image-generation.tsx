@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import AudioPlayer from 'react-h5-audio-player';
 import AudioReplaceModal from "./audio-replace-modal";
+import ImageReplaceModal from "./image-replace-modal";
 import { Button } from "@/components/ui/button"
 
 interface ImageGenerationProps {
@@ -16,9 +17,9 @@ interface ImageGenerationProps {
 interface ImageItem {
     asset_id: number,
     image_url: string,
+    custom_image_url: string,
     script: string,
     audio_url: string,
-    custom_audio?: File | Blob,
     custom_audio_url?: string,
 }
 
@@ -29,6 +30,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
 
     // Support upload/record audio
     const [showAudioModal, setShowAudioModal] = useState(false)
+    const [showImageModal, setShowImageModal] = useState(false)
     const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null);
 
     useEffect(() => {
@@ -114,7 +116,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
     }
 
     const enableButtons = (id: number) => {
-        const buttons = document.querySelectorAll(`.asset-${id} > button`)
+        const buttons = document.querySelectorAll(`.asset-${id} button`)
         buttons.forEach(button => {
             button.removeAttribute("disabled")
         });
@@ -122,17 +124,18 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
 
     const updateScript = (id: number, value: string) => {
         const newAssets = [...assets]
-        newAssets[id].script = value
+        newAssets[id-1].script = value
         setAssets(newAssets)
     }
 
     const updateImage = async (id: number) => {
-        if (assets[id].script.length === 0) {
+        if (assets[id-1].script.length === 0) {
             toast.error("Script can not be empty")
             return;
         }
 
         disableButtons(id)
+        const script = assets[id-1].script;
 
         const response = await fetch('/api/image_generation', {
             method: 'POST',
@@ -140,7 +143,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                 'Content-type': 'application/json'
             },
             body: JSON.stringify({
-                prompt_data: assets[id].script,
+                prompt_data: script,
                 prompt_index: id,
                 prompt_style: imageVibe
             })
@@ -157,12 +160,14 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
     }
 
     const updateSounds = async (id: number) => {
-        if (assets[id].script.length === 0) {
+        
+        if (assets[id-1].script.length === 0) {
             toast.error("Script can not be empty")
             return;
         }
 
         disableButtons(id)
+        const script = assets[id-1].script;
 
         const response = await fetch('/api/voice_generation', {
             method: 'POST',
@@ -170,7 +175,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                 'Content-type': 'application/json'
             },
             body: JSON.stringify({
-                prompt_data: assets[id].script,
+                prompt_data: script,
                 prompt_index: id,
                 prompt_lang: voiceLanguage
             })
@@ -224,7 +229,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                                 <div className="grid grid-flow-row w-full gap-4">
                                     <div className="flex-1 grid grid-cols-9 border-b">
                                         <img
-                                            src={`${asset.image_url}?v=${Date.now()}`}
+                                            src={`${asset.custom_image_url || asset.image_url}?v=${Date.now()}`}
                                             alt={asset.script}
                                             className="pr-2 col-span-2 mx-auto my-auto w-auto h-auto object-contain"
                                         />
@@ -273,6 +278,16 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                                                 }}>
                                                 Thay đổi âm thanh
                                             </Button>
+
+                                            <Button
+                                                variant="outline"
+                                                className="bg-green-600 text-white p-2 "
+                                                onClick={() => {
+                                                    setSelectedAssetId(asset.asset_id);
+                                                    setShowImageModal(true);
+                                                }}>
+                                                Thay đổi hình ảnh
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -285,6 +300,14 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                 <AudioReplaceModal
                     showAudioModal={showAudioModal}
                     setShowAudioModal={setShowAudioModal}
+                    selectedAssetId={selectedAssetId}
+                    setAssets={setAssets}
+                    assets={assets}
+                />
+                {/* Support upload image */}
+                <ImageReplaceModal
+                    showImageModal={showImageModal}
+                    setShowImageModal={setShowImageModal}
                     selectedAssetId={selectedAssetId}
                     setAssets={setAssets}
                     assets={assets}

@@ -3,7 +3,6 @@ import { ChevronDown, Play, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react";
 import { ToastContainer, toast } from 'react-toastify';
-import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 
 interface ContentCreationProps {
@@ -185,6 +184,14 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
 
       if (temp_array.length === 0) return;
 
+      setProgress("Clearing previous assets...")
+      const deleteResponse = await fetch('api/assets_data/clear_assets', {
+        method: 'DELETE'
+      })
+
+      if (!deleteResponse.ok)
+        return;
+
       for (const s of temp_array) {
         setProgress("Generating image " + (s.asset_id) + " out of " + (temp_array.length) + "...")
         const image_response = await fetch('/api/image_generation', {
@@ -198,7 +205,6 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
             prompt_style: imageVibe
           })
         })
-
 
         if (image_response.ok){
           let image_result = await image_response.json();
