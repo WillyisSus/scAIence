@@ -7,7 +7,6 @@ import { ChevronRight, Scissors, RotateCcw, RotateCw, Eye, Video, Volume, Trash,
 import { Button } from "@/components/ui/button"
 import AudioPlayer from 'react-h5-audio-player';
 import ReactPlayer from 'react-player';
-import { Item } from "@radix-ui/react-accordion"
 import next from "next"
 import {   DndContext,
   KeyboardSensor,
@@ -20,6 +19,8 @@ import { arrayMove } from "@dnd-kit/sortable"
 import { TrackRow } from "./ui/track-row"
 import { resourceUsage } from "process"
 import { toast, ToastContainer } from "react-toastify"
+import { Menu, Item, Separator, Submenu, useContextMenu } from 'react-contexify';
+import 'react-contexify/ReactContexify.css';
 
 interface VideoEditorProps {
   onCancel?: () => void
@@ -57,13 +58,14 @@ function formatTime(seconds) {
 
 export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const pxPerSecond = 16;
-  const trackName = {
-    first_track:"subtitle",
-    second_track: "overlay",
-    third_track: "image",
-    fourth_track: "audio"
-  }
+  const MENU_ID = "delete-context-menu"
+  const MENU_ID_2 = "add-context-menu"
+  const maxSubtitleID = useRef(0);
+  const maxImageID = useRef(0);
+  const maxAudioID = useRef(0);
+  const {show} = useContextMenu()
   const lastFrameTime = useRef(0);
+  
   const frameRef = useRef();
   const [previewPlay, setPreviewPlay] = useState(false);
   const [currentTime, setCurrentTime] = useState("00:00")
@@ -266,12 +268,15 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         try{
           timelineTracks.forEach(element => {
             if (element?.type === trackName.first_track){
+              maxSubtitleID.current = element.maxID
               setSubtitleTrackResources(element.items)
             }else if (element?.type === trackName.second_track){
               
             }else if (element?.type === trackName.third_track){
+              maxImageID.current = element.maxID
               setImageTrackResources(element.items)
             } else if (element?.type === trackName.fourth_track){
+              maxAudioID.current = element.maxID
               setVoiceTrackResources(element.items)
             }
           });
@@ -340,6 +345,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     
             }
           })
+          maxImageID.current = timeLineImages.length;
+          maxAudioID.current = timeLineAudio.length;
+          maxSubtitleID.current = timeLineSubtitles.length;
           setImageTrackResources(timeLineImages);
           setSubtitleTrackResources(timeLineSubtitles);
           setVoiceTrackResources(timeLineAudio);
@@ -352,21 +360,140 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   }, [])
   // Animation for playhead
 
-
-  // useEffect(() => {
-  //   tracks[2].items.forEach((item : TimelineItem) =>{
-  //     if (numericCurrentTime >= item.position/pxPerSecond && numericCurrentTime <= item.position/pxPerSecond + item.trim_end){
-  //       const playingTime = (numericCurrentTime*pxPerSecond - item.position)/pxPerSecond;
-  //       console.log("On play:", playingTime)
-  //       if (playingTime < item.duration) 
-  //         console.log("Source", item.source)
-  //     }
-      
-  //   })
-  // }, [numericCurrentTime])
   // Function to check if two items overlap
   const checkOverlap = (item1: TimelineItem, item2: TimelineItem) => {
     return item1.position < item2.position + item2.width && item1.position + item1.width > item2.position
+  }
+  // Add Remove into from timelines
+  function handleContextMenu(event, menuType, item){
+    let menuID = ""
+    switch(menuType){
+      case "delete":
+          menuID = MENU_ID
+          break
+      case "add":
+          menuID = MENU_ID_2
+    }
+    show({
+      id: menuID,
+      event,
+      props: {
+          key: item
+      }
+    })
+  }
+
+  function handleShowAddMenu(event){
+    const id = event.currentTarget.id
+    const index = resources.findIndex((el) => el.id == id)
+    const newItem = resources[index]
+    handleContextMenu(event, "add", {...newItem})
+  }
+  const handleItemClick = ({ id, event, props }) => {
+    switch (id) {
+      case "delete":{
+        console.log(event, props)
+        const deletedItem = props.key;
+        if (deletedItem.id.indexOf(trackName.first_track) != -1){
+          const removeIndex = subtitleTrackResources.findIndex((element) => deletedItem.id === element.id)
+          setSubtitleTrackResources((subtitleTrackResources)=>{
+            subtitleTrackResources.splice(removeIndex, 1)
+            return [...subtitleTrackResources]
+          }) 
+          
+        }else if (deletedItem.id.indexOf(trackName.second_track) != -1){
+    
+        } else if(deletedItem.id.indexOf(trackName.third_track) != -1){
+          const removeIndex = imageTrackResources.findIndex((element) => deletedItem.id === element.id)
+          setImageTrackResources((imageTrackResources)=>{
+            imageTrackResources.splice(removeIndex, 1)
+            return [...imageTrackResources]
+          }) 
+        } else if (deletedItem.id.indexOf(trackName.fourth_track) != -1) {
+          const removeIndex = voiceTrackResources.findIndex((element) => deletedItem.id === element.id)
+          setVoiceTrackResources((voiceTrackResources)=>{
+            voiceTrackResources.splice(removeIndex, 1)
+            return [...voiceTrackResources]
+          }) 
+        }
+        toast.success("Đã xóa tài nguyên")
+        break;
+      }
+      case "add":{
+        const newItem = props.key
+        if (newItem.type === "subtitle"){
+          const foundIndex = subtitleTrackResources.findIndex((el) => el.name == newItem.name)
+          if (foundIndex != -1) {
+            toast.error("Đã có tài nguyên")
+            break
+          }
+          subtitleTrackResources.push({
+            id: newItem.type + "_" + maxSubtitleID.current + 1,
+            name: newItem.name,
+            source: newItem.source,
+            original_duration: newItem.original_duration*1,
+            duration: newItem.original_duration*1,
+            trim_start: 0,
+            trim_end: newItem.original_duration,
+            width: (newItem.original_duration) * pxPerSecond,
+            type: "subtitle"
+          })
+          setSubtitleTrackResources([...subtitleTrackResources])
+          maxSubtitleID.current++
+        }
+        else if (newItem.type === "image"){
+          const foundIndex = imageTrackResources.findIndex((el) => el.name == newItem.name)
+          if (foundIndex != -1) {
+            toast.error("Đã có tài nguyên")
+            break
+          }
+          imageTrackResources.push({
+            id: newItem.type + "_" + maxImageID.current + 1,
+            name: newItem.name,
+            source: newItem.source,
+            original_duration: newItem.original_duration*1,
+            duration: newItem.original_duration*1,
+            trim_start: 0,
+            trim_end: newItem.original_duration,
+            width: (newItem.original_duration) * pxPerSecond,
+            type: "image"
+          })
+          setImageTrackResources([...imageTrackResources])
+          maxImageID.current++
+
+        }
+        else if (newItem.type === "audio"){
+          const foundIndex = voiceTrackResources.findIndex((el) => el.name == newItem.name)
+          if (foundIndex != -1) {
+            toast.error("Đã có tài nguyên")
+            break
+          }
+          voiceTrackResources.push({
+            id: newItem.type + "_" + maxAudioID.current + 1,
+            name: newItem.name,
+            source: newItem.source,
+            original_duration: newItem.original_duration*1,
+            duration: newItem.original_duration*1,
+            trim_start: 0,
+            trim_end: newItem.original_duration,
+            width: (newItem.original_duration) * pxPerSecond,
+            type: "audio"
+          })
+          setVoiceTrackResources([...voiceTrackResources])
+          maxAudioID.current++
+        }
+        toast.success("Đã thêm tài nguyên")
+        break
+      }
+      default: break
+      //etc...
+    }
+  }
+  const trackName = {
+    first_track:"subtitle",
+    second_track: "overlay",
+    third_track: "image",
+    fourth_track: "audio"
   }
   const saveProjectProperties = async ()=>{
 
@@ -378,18 +505,22 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     },
     body: JSON.stringify({
       profile: [ {
+        maxID: maxSubtitleID.current,
         type: trackName.first_track,
         items: subtitleTrackResources,
       },
       {
+        maxID: 0,
         type: trackName.second_track,
         items: [],
       },
       {
+        maxID: maxImageID.current,
         type: trackName.third_track,
         items: imageTrackResources,
       },
       {
+        maxID: maxAudioID.current,
         type: trackName.fourth_track,
         items: voiceTrackResources,
       }]
@@ -515,7 +646,16 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   }
 
   return (
+    
     <div className="max-w-full max-h-full">
+      <div>
+        <Menu id={MENU_ID}>
+          <Item id="delete" onClick={handleItemClick}>Xóa tài nguyên</Item>
+        </Menu>
+        <Menu id={MENU_ID_2}>
+          <Item id="add" onClick={handleItemClick}>Thêm vào Timeline</Item>
+        </Menu>
+      </div>
       {/* Top toolbar */}
       <div className="flex justify-between p-4 border-b">
         <div>
@@ -558,9 +698,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             {resources.map((resource) => (
               <div
                 key={resource.id}
+                id={resource.id}
                 className="flex flex-col items-center cursor-move"
-                draggable
-                onDragStart={(e) => handleDragStart(e, resource)}
+                onContextMenu={handleShowAddMenu}
               >
                 <div className="bg-gray-200 w-full aspect-video rounded mb-1 flex items-center justify-center text-xs" onClick={() => {loadDataContent(resource)}}>
                   {resource.type === "audio" ? (
@@ -696,24 +836,28 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             onDragCancel={handleDragCancel}
             onDragOver={handleDragOver}>
             <TrackRow
+                handleDeleteContextMenu={handleContextMenu}
                 id={trackName.first_track}
                 tasks={subtitleTrackResources}
                 onResizeItem={handleTrackItemResize}>
               </TrackRow>
             <TrackRow
+                handleDeleteContextMenu={handleContextMenu}
                 id={trackName.second_track}
                 tasks={[]}
                 onResizeItem={handleTrackItemResize}>
               </TrackRow>
             <TrackRow
+                handleDeleteContextMenu={handleContextMenu}
                 id={trackName.third_track}
                 tasks={imageTrackResources}
                 onResizeItem={handleTrackItemResize}>
               </TrackRow>
             <TrackRow
-                  id={trackName.fourth_track}
-                  tasks={voiceTrackResources}
-                  onResizeItem={handleTrackItemResize}>
+                handleDeleteContextMenu={handleContextMenu}
+                id={trackName.fourth_track}
+                tasks={voiceTrackResources}
+                onResizeItem={handleTrackItemResize}>
               </TrackRow>
             
           </DndContext>

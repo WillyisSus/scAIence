@@ -2,13 +2,15 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {Resizable} from "re-resizable"
 
-export const TrackRowItem = ({ id, item, onResizeStop}) => {
+export const TrackRowItem = ({ id, item, onResizeStop, handleDeleteContextMenu}) => {
   const { attributes, listeners, setNodeRef, transform, transition} =
     useSortable({ id });
   const handleOnResizeStart = (e, dir, ref, d) => {
     console.log("Resize Start:");
   }
-
+  function myHandle(event){
+    handleDeleteContextMenu(event, "delete", {...item})
+  }
   const handleOnResizeStop = (e, dir, ref, d) => {
     onResizeStop({...item}, dir, d.width)
   }
@@ -85,8 +87,12 @@ export const TrackRowItem = ({ id, item, onResizeStop}) => {
             : ""
         }}
       >
-        <span {...attributes}
-      {...listeners} className="truncate px-2 w-[90%] h-full text-center content-center cursor-move">{item.name}</span>
+        <div {...attributes}
+        {...listeners}
+        onContextMenu={myHandle} 
+        className="truncate px-2 w-[90%] h-full text-center content-center cursor-move">
+        {item.name}
+        </div>
       </Resizable>
     </div>
   );

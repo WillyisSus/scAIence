@@ -173,6 +173,9 @@ importers:
       react:
         specifier: ^19
         version: 19.1.0
+      react-contexify:
+        specifier: ^6.0.0
+        version: 6.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react-day-picker:
         specifier: 8.10.1
         version: 8.10.1(date-fns@4.1.0)(react@19.1.0)
@@ -1470,6 +1473,10 @@ packages:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
 
+  clsx@1.2.1:
+    resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
+    engines: {node: '>=6'}
+
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
@@ -2272,6 +2279,12 @@ packages:
     peerDependencies:
       react: ^16.13.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.13.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  react-contexify@6.0.0:
+    resolution: {integrity: sha512-jMhz6yZI81Jv3UDj7TXqCkhdkCFEEmvwGCPXsQuA2ZUC8EbCuVQ6Cy8FzKMXa0y454XTDClBN2YFvvmoFlrFkg==}
+    peerDependencies:
+      react: '>=16'
+      react-dom: '>=16'
 
   react-day-picker@8.10.1:
     resolution: {integrity: sha512-TMx7fNbhLk15eqcMt+7Z7S2KF7mfTId/XJDjKE8f+IUcFn0l08/kI4FiYTL/0yuOLmEcbR4Fwe3GJf/NiiMnPA==}
@@ -3981,6 +3994,8 @@ snapshots:
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
 
+  clsx@1.2.1: {}
+
   clsx@2.1.1: {}
 
   cmdk@1.0.4(@types/react-dom@19.1.2(@types/react@19.1.1))(@types/react@19.1.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
@@ -4782,6 +4797,12 @@ snapshots:
 
   re-resizable@6.11.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+
+  react-contexify@6.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+    dependencies:
+      clsx: 1.2.1
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 

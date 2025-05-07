@@ -152,15 +152,16 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
               <th className="p-4 text-left">Bản xem trước</th>
               <th className="p-4 text-left">Trạng thái</th>
               <th className="p-4 text-left">Ngày tạo</th>
+              <th className="p-4 text-left">Xóa dự án</th>
             </tr>
           </thead>
           <tbody>
             {projectList.map((video) => (
-              <tr key={video} className="border-b" onClick={async () => {
+              <tr key={video} className="border-b" >
+                <td className="p-4" onClick={async () => {
                 await selectProject(video);
                 onGoToProject();
               }}>
-                <td className="p-4">
                   <div className="flex items-center gap-2">
                     {/*<div*/}
                     {/*  className={`w-5 h-5 border rounded flex items-center justify-center cursor-pointer`}*/}
@@ -170,17 +171,28 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                     {video}
                   </div>
                 </td>
-                <td className="p-4">
+                <td className="p-4" onClick={async () => {
+                await selectProject(video);
+                onGoToProject();
+                }}>
                   <img
                     src={"/placeholder.svg"}
                     alt={video}
                     className="w-24 h-12 object-cover rounded"
                   />
                 </td>
-                <td className="p-4">{"Lol"}</td>
-                <td className="p-4">{"Lol"}</td>
+                <td onClick={async () => {
+                await selectProject(video);
+                onGoToProject();
+                }} className="p-4">{"Lol"}</td>
+                <td onClick={async () => {
+                await selectProject(video);
+                onGoToProject();
+               }} className="p-4">{"Lol"}</td>
+                <td className="p-4"><Button className="btn btn-dark bg-white"><Trash2 className="size-6 text-red-500"></Trash2></Button></td>
               </tr>
             ))}
+ 
           </tbody>
         </table>
       </div>
