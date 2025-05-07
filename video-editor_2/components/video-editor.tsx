@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, use } from "react"
-import { ChevronRight, Scissors, RotateCcw, RotateCw, Eye, Video, Volume, Trash, PlayCircleIcon, Save } from "lucide-react"
+import { ChevronRight, Scissors, RotateCcw, RotateCw, Eye, Video, Volume, Trash, PlayCircleIcon, Save, PlayIcon, ArrowRightFromLine } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AudioPlayer from 'react-h5-audio-player';
 import ReactPlayer from 'react-player';
@@ -372,6 +372,22 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         console.log(res)
       }
   }
+
+  const saveProjectAndShowPreview = async ()=>{
+      await saveProjectProperties()
+      const response = await fetch("/api/video_editor/preview", {
+        method: 'GET',
+        headers: {
+          "Content-type":"application/json"
+        }
+      })
+      if (response.ok){
+        const data = await response.json();
+        const previewURL = data.output
+        console.log(previewURL)
+        setOutputURL(previewURL)
+      }
+  }
   // Function to find a valid position for an item that doesn't overlap with others
   const findValidPosition = (trackId: number, item: TimelineItem, currentPosition: number) => {
     const track = tracks.find((t) => t.id === trackId)
@@ -700,8 +716,11 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectProperties}>
               Lưu dự án <Save className="h-4 w-4" />
             </Button>
+          <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectAndShowPreview}>
+              Xem trước <PlayIcon className="h-4 w-4" />
+            </Button>
           <Button variant="outline" className="flex items-center gap-2" onClick={onExportVideo}>
-            Xuất bản <ChevronRight className="h-4 w-4" />
+            Xuất bản <ArrowRightFromLine className="h-4 w-4" />
           </Button>
           
         </div>
