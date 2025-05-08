@@ -37,6 +37,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
 
   const [progress, setProgress] = useState("");
   const [scriptVibe, setScriptVibe] = useState("Casual");
+  const [scriptAudience, setScriptAudience] = useState("Everyone");
   
   const [scriptInputType, setScriptInputType] = useState("manual");
   
@@ -82,6 +83,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
             body: JSON.stringify({
               script: scriptInput,
               vibe: scriptVibe,
+              audience : scriptAudience
             })
           })
         }
@@ -94,6 +96,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
             body: JSON.stringify({
               link: scriptLink,
               vibe: scriptVibe,
+              audience : scriptAudience
             })
           })
         }
@@ -107,6 +110,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
               filename: scriptFileName,
               file: scriptFile,
               vibe: scriptVibe,
+              audience : scriptAudience
             })
           })
         }
@@ -358,17 +362,38 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
             </div>
           </div>
 
-          <div className="mb-6">
-            <label className="block mb-2 font-medium">Phong cách</label>
-            <div className="relative w-full">
-              <select className="w-full p-2 border rounded appearance-none pr-10"
-                      onChange={event => setScriptVibe(event.target.value)} value={scriptVibe}>
-                <option value={"Casual"}>Phổ thông</option>
-                <option value={"Comical"}>Hài hước</option>
-                <option value={"Serious"}>Nghiêm túc</option>
-              </select>
-              <ChevronDown
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
+          <div className="mb-6 grid-cols-2 grid gap-2">
+            <div>
+              <label className="block mb-2 font-medium">Phong cách</label>
+              <div className="relative w-full">
+                <select className="w-full p-2 border rounded appearance-none pr-10"
+                        onChange={event => setScriptVibe(event.target.value)} value={scriptVibe}>
+                  <option value={"Casual"}>Phổ thông</option>
+                  <option value={"Comical"}>Hài hước</option>
+                  <option value={"Serious"}>Nghiêm túc</option>
+                  <option value={"Lively"}>Sống động</option>
+                  <option value={"Descriptive"}>Kỹ càng</option>
+                </select>
+                <ChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"/>
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-2 font-medium">Đối tượng</label>
+              <div className="relative w-full">
+                <select className="w-full p-2 border rounded appearance-none pr-10"
+                        onChange={event => setScriptVibe(event.target.value)} value={scriptVibe}>
+                  <option value={"Everyone"}>Mọi người</option>
+                  <option value={"Children"}>Trẻ em</option>
+                  <option value={"Students"}>Học sinh</option>
+                  <option value={"Adults"}>Người lớn</option>
+                  <option value={"Elders"}>Người già</option>
+
+                </select>
+                <ChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"/>
+              </div>
             </div>
           </div>
 
@@ -381,7 +406,8 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
             <label className="block mb-2 font-medium">Ngôn ngữ</label>
             <div className="flex gap-4 items-center">
               <div className="relative w-full">
-                <select className="w-full p-2 border rounded appearance-none pr-10" onChange={event => setVoiceLanguage(event.target.value)}>
+                <select className="w-full p-2 border rounded appearance-none pr-10"
+                        onChange={event => setVoiceLanguage(event.target.value)}>
                   <option value={"en"}>Tiếng Anh</option>
                   <option value={"vi"}>Tiếng Việt</option>
                   <option value={"jp"}>Tiếng Nhật</option>
