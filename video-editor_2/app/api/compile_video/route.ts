@@ -108,7 +108,7 @@ export async function POST(req: { json: () => any; }, res: any) {
                 outputs: `v${index}`
             })
         }
-        if (!image.xfadeTransition.isBlank) {
+        if (image.xfadeTransition.length > 0) {
             xfadeExt += 1
         } else {
             imageConcat.inputs.push(`v${index}`)
@@ -120,10 +120,11 @@ export async function POST(req: { json: () => any; }, res: any) {
         } else {
             image_list[index].duration =  image.duration + xfadeExt * xfadeDuration / 2
         }
-        if (index > 0 && !image_list[index-1].xfadeTransition.isBlank) {
+        if (index > 0 && image_list[index-1].xfadeTransition.length > 0) {
             xfadeExt -= 1
         }
     })
+    console.log(imageConcat)
     imageConcat.options.n = imageConcat.inputs.length
     audio_list.forEach((audio, index) => {
         filters.push({
