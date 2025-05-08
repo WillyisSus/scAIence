@@ -95,7 +95,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     itemId: null,
   })
   const [topBarProgress, setTopBarProgress] = useState("")
-  const [shareDropdown, setShareDropdown] = useState(false)
+  const [shareDropdown, setShareDropdown] = useState(true)
 
   const [is_data_loaded, setDataLoaded] = useState(false)
   const [resources, setResources] = useState([])

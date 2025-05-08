@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
             }
         );
 
-        const sharedata = await fsPromises.readFile(`public/uploaddata.json`)
-        if (sharedata) {
+        try {
+            const sharedata = await fsPromises.readFile(`public/uploaddata.json`)
             const sharedatajson = await JSON.parse(sharedata)
             const pageIndex = sharedatajson.facebook.findIndex(page => page.pageID === pageId)
             if (pageIndex != -1) {
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
                 })
             }
             await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify(sharedatajson));
-        } else {
+        } catch (err) {
             await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify({facebook:[{pageID:pageId,video:[{local_path:videoPath,upload_id:uploadResponse.data.id}]}],youtube:[]}))
         }
 
