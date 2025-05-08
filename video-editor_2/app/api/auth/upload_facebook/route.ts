@@ -9,14 +9,14 @@ export async function POST(req: NextRequest) {
     const appdatajson = await JSON.parse(appdata);
     const project_name = appdatajson.current_project;
     try {
-        const { pageId, pageAccessToken, title, description } = await req.json();
+        const { pageId, pageAccessToken, title, description, filename = "output_video.mp4" } = await req.json();
 
-        const videoPath = `./public/${project_name}/output_video.mp4`
+        const videoPath = `./public/${project_name}/${filename}`
 
         const videoStream = fs.createReadStream(videoPath);
         const formData = new FormData();
         formData.append("source", videoStream, {
-            filename: "output_video.mp4",
+            filename: filename,
             contentType: "video/mp4",
         });
         formData.append("title", title);
@@ -37,6 +37,29 @@ export async function POST(req: NextRequest) {
                 maxContentLength: Infinity,
             }
         );
+
+        const sharedata = await fsPromises.readFile(`public/uploaddata.json`)
+        if (sharedata) {
+            const sharedatajson = await JSON.parse(sharedata)
+            const pageIndex = sharedatajson.facebook.findIndex(page => page.pageID === pageId)
+            if (pageIndex != -1) {
+                sharedatajson.facebook[pageIndex].video.push({
+                    local_path: videoPath,
+                    upload_id: uploadResponse.data.id
+                })
+            } else {
+                sharedatajson.facebook.push({
+                    pageID: pageId,
+                    video: [{
+                        local_path: videoPath,
+                        upload_id: uploadResponse.data.id
+                    }]
+                })
+            }
+            await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify(sharedatajson));
+        } else {
+            await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify({facebook:[{pageID:pageId,video:[{local_path:videoPath,upload_id:uploadResponse.data.id}]}],youtube:[]}))
+        }
 
         return NextResponse.json({
             success: true,

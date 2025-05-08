@@ -731,27 +731,27 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const [dialogError, setDialogError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const facebookItemClick = (page) => {
+  const facebookItemClick = async (page) => {
     setSelectedPage(page)
     setSelectedProvider("facebook")
     setOpen(true)
-    // const response = await axios.post('/api/auth/get_facebook_view', {
-    //   videoId: "1208828534026097",
-    //   pageAccessToken: session.pages.find(paged => paged.id === "597796793425257")?.access_token
-    // });
-    // const data = response.data;
-    // console.log(data);
+    const response = await axios.post('/api/auth/get_facebook_view', {
+      videoId: "981835267445768",
+      pageAccessToken: session.pages.find(paged => paged.id === "597796793425257")?.access_token
+    });
+    const data = response.data;
+    console.log(data);
   }
 
-  const googleItemClick = () => {
+  const googleItemClick = async () => {
     setSelectedProvider("google")
     setOpen(true)
-    // const response = await axios.post('/api/auth/get_youtube_view', {
-    //   videoId: "iOvjiXZp010",
-    //   accessToken: session.googleAccessToken,
-    // });
-    // const data = response.data;
-    // console.log(data);
+    const response = await axios.post('/api/auth/get_youtube_view', {
+      videoId: "ActBtBjnjxY",
+      accessToken: session.googleAccessToken,
+    });
+    const data = response.data;
+    console.log(data);
   }
 
   const handleConfirm = async () => {
@@ -773,6 +773,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         alert("Đăng lên Facebook thành công!")
       } else if (selectedProvider === "google") {
         const response = await axios.post('/api/auth/upload_youtube', {
+          channelId: session.googleUserId,
           accessToken: session.googleAccessToken,
           title: formData.title,
           description: formData.description

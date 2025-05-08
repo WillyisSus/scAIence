@@ -9,9 +9,9 @@ export async function POST(req: NextRequest) {
         const appdatajson = JSON.parse(appdata);
         const project_name = appdatajson.current_project;
 
-        const { accessToken, title, description, privacyStatus = "public" } = await req.json();
+        const { channelId, accessToken, title, description, privacyStatus = "public", filename = "output_video.mp4" } = await req.json();
 
-        const videoPath = `./public/${project_name}/output_video.mp4`;
+        const videoPath = `./public/${project_name}/${filename}`;
         const videoSize = fs.statSync(videoPath).size;
 
         const metadata = {
@@ -52,9 +52,33 @@ export async function POST(req: NextRequest) {
             maxBodyLength: Infinity,
         });
 
+        const sharedata = await fsPromises.readFile(`public/uploaddata.json`)
+        if (sharedata) {
+            const sharedatajson = await JSON.parse(sharedata)
+            const pageIndex = sharedatajson.youtube.findIndex(page => page.pageID === channelId)
+            if (pageIndex != -1) {
+                sharedatajson.youtube[pageIndex].video.push({
+                    local_path: videoPath,
+                    upload_id: finalUpload.data.id
+                })
+            } else {
+                sharedatajson.facebook.push({
+                    pageID: channelId,
+                    video: [{
+                        local_path: videoPath,
+                        upload_id: finalUpload.data.id
+                    }]
+                })
+            }
+            await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify(sharedatajson));
+        } else {
+            await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify({facebook:[],youtube:[{pageID:channelId,video:[{local_path:videoPath,upload_id:finalUpload.data.id}]}]}))
+        }
+
         return NextResponse.json({
             success: true,
             videoId: finalUpload.data.id,
+            channelId: channelId
         });
     } catch (error: any) {
         console.error("Lỗi upload YouTube:", error.response?.data || error.message);
