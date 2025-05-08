@@ -17,20 +17,14 @@ export async function DELETE() {
 		await Promise.all(
 			images.map(async (file) => {
 				const filePath = path.join(imageResources, file);
-				const stat = await fsPromises.stat(filePath);
-
-				if (stat.isFile())
-					await fsPromises.unlink(filePath);
+				await fsPromises.unlink(filePath);
 			})
 		);
 
 		await Promise.all(
 			audios.map(async (file) => {
 				const filePath = path.join(audioRecources, file);
-				const stat = await fsPromises.stat(filePath);
-
-				if (stat.isFile())
-					await fsPromises.unlink(filePath);
+				await fsPromises.unlink(filePath);
 			})
 		);
 

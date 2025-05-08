@@ -123,18 +123,18 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
     }
 
     const updateScript = (id: number, value: string) => {
-        const newAssets = [...assets]
-        newAssets[id-1].script = value
-        setAssets(newAssets)
+        const newAssets = [...assets];
+        newAssets[id-1].script = value;
+        setAssets(newAssets);
     }
 
     const updateImage = async (id: number) => {
         if (assets[id-1].script.length === 0) {
-            toast.error("Script can not be empty")
+            toast.error("Script can not be empty");
             return;
         }
 
-        disableButtons(id)
+        disableButtons(id);
         const script = assets[id-1].script;
 
         const response = await fetch('/api/image_generation', {
@@ -149,14 +149,10 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
             })
         })
 
-        if (!response.ok) {
-            toast.error("Something wrong happened")
-            return;
-        }
+        if (!response.ok) toast.error("Something wrong happened");
+        else toast.success("Image updated successfully");
 
-        toast.success("Image updated successfully");
-
-        enableButtons(id)
+        enableButtons(id);
     }
 
     const updateSounds = async (id: number) => {
@@ -166,7 +162,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
             return;
         }
 
-        disableButtons(id)
+        disableButtons(id);
         const script = assets[id-1].script;
 
         const response = await fetch('/api/voice_generation', {
@@ -181,14 +177,36 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
             })
         })
 
-        if (!response.ok) {
-            toast.error("Something wrong happened")
-            return;
+        if (!response.ok) toast.error("Something wrong happened");
+        else toast.success("Audio updated successfully");
+
+        enableButtons(id);
+    }
+
+    const deleteCustomAssets = async (id: number) => {
+        disableButtons(id);
+
+        const response = await fetch('api/assets_data/delete_custom_assets', {
+            method: 'DELETE',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                assets_id: id
+            })
+        });
+
+        if (!response.ok) 
+            toast.error("Something wrong happened");
+        else {
+            toast.success("Custom assets deleted successfully");
+            const newAssets = [...assets];
+            newAssets[id-1].custom_image_url = "";
+            newAssets[id-1].custom_audio_url = "";
+            setAssets(newAssets);
         }
 
-        toast.success("Audio updated successfully");
-
-        enableButtons(id)
+        enableButtons(id);
     }
 
     const generatePreview = async () => {
@@ -291,6 +309,14 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                                                     setShowImageModal(true);
                                                 }}>
                                                 Thay đổi hình ảnh
+                                            </Button>
+
+                                            <Button
+                                                variant="outline"
+                                                className="bg-red-600 text-white p-2 "
+                                                onClick={() => deleteCustomAssets(asset.asset_id)}
+                                            >
+                                                Xóa tài nguyên
                                             </Button>
                                         </div>
                                     </div>
