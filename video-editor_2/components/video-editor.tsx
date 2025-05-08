@@ -5,8 +5,13 @@ import type React from "react"
 import { useState, useEffect, useRef, use } from "react"
 import { ChevronRight, Scissors, RotateCcw, RotateCw, Eye, Video, Volume, Trash, PlayCircleIcon, Save, PlayIcon, ArrowRightFromLine } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogClose, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import AudioPlayer from 'react-h5-audio-player';
 import ReactPlayer from 'react-player';
+import { signIn, signOut, useSession} from 'next-auth/react';
+import axios from "axios";
+import {Input} from "@/components/ui/input";
 import next from "next"
 import {   DndContext,
   KeyboardSensor,
@@ -36,6 +41,7 @@ interface TimelineItem {
   trim_end: number
   width: number
   type: string
+  xfadeTransition: string
 }
 
 interface Track {
@@ -65,7 +71,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const maxAudioID = useRef(0);
   const {show} = useContextMenu()
   const lastFrameTime = useRef(0);
-  
+
   const frameRef = useRef();
   const [previewPlay, setPreviewPlay] = useState(false);
   const [currentTime, setCurrentTime] = useState("00:00")
@@ -73,7 +79,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const [numericTotalTime, setNumericTotalTime] = useState(1000);
   const [totalTime, setTotalTime] = useState("12:03")
   const [draggingItem, setDraggingItem] = useState<any>(null)
-  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
+  const [contextMenuPosition, setContextMenuPosition] = useState({x: 0, y: 0})
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [selectedItem, setSelectedItem] = useState<{ trackId: number | null; itemId: string | null }>({
     trackId: null,
@@ -89,6 +95,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     itemId: null,
   })
   const [topBarProgress, setTopBarProgress] = useState("")
+  const [shareDropdown, setShareDropdown] = useState(false)
 
   const [is_data_loaded, setDataLoaded] = useState(false)
   const [resources, setResources] = useState([])
@@ -101,6 +108,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
   // Reference to track containers for position calculations
   const trackRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
+
+  const {data: session, update} = useSession();
 
   // Modified tracks structure to support multiple items per position
   const [tracks, setTracks] = useState<Track[]>([
@@ -155,7 +164,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           break
         }
         case trackName.second_track:{
-          
+
           break
         }
         case trackName.third_track:{
@@ -172,7 +181,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         }
         default: break
       }
-      
+
     }
     // if (overContainer !== activeContainer){
     //   return
@@ -216,8 +225,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         setSubtitleTrackResources((subtitleTrackResources)=>{
           subtitleTrackResources[replaceIndex] = {...item}
           return [...subtitleTrackResources]
-        }) 
-        
+        })
+
     }else if (item.id.indexOf(trackName.second_track) != -1){
 
     } else if(item.id.indexOf(trackName.third_track) != -1){
@@ -225,13 +234,13 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       setImageTrackResources((imageTrackResources)=>{
         imageTrackResources[replaceIndex] = {...item}
         return [...imageTrackResources]
-      }) 
+      })
     } else if (item.id.indexOf(trackName.fourth_track) != -1) {
       const replaceIndex = voiceTrackResources.findIndex((element) => item.id === element.id)
       setVoiceTrackResources((voiceTrackResources)=>{
         voiceTrackResources[replaceIndex] = {...item}
         return [...voiceTrackResources]
-      }) 
+      })
     }
   }
   // Drag drop in track
@@ -260,7 +269,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       const timelineRequest = await fetch('/api/video_editor/timelines', {
         method: 'GET',
         headers: {
-          'Content-type': 'application/json' 
+          'Content-type': 'application/json'
         }
       })
       if (timelineRequest.status === 200){
@@ -273,7 +282,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
               maxSubtitleID.current = element.maxID
               setSubtitleTrackResources(element.items)
             }else if (element?.type === trackName.second_track){
-              
+
             }else if (element?.type === trackName.third_track){
               maxImageID.current = element.maxID
               setImageTrackResources(element.items)
@@ -285,7 +294,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         }catch (err){
           console.log(err)
         }
-        
+
       }else{
         const response = await fetch('/api/project_init/save_resources', {
           method: 'GET',
@@ -303,6 +312,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           resource_array.forEach(items => {
             const newItem = {...items}
             console.log(newItem)
+
             if (items.type === "subtitle"){
               timeLineSubtitles.push({
                 id: newItem.type + "_" + timeLineSubtitles.length + 1,
@@ -315,7 +325,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 width: (newItem.original_duration) * pxPerSecond,
                 type: "subtitle"
               })
-    
+
             }
             else if (items.type === "image"){
               timeLineImages.push({
@@ -327,10 +337,11 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 trim_start: 0,
                 trim_end: newItem.original_duration,
                 width: (newItem.original_duration) * pxPerSecond,
-                type: "image"
+                type: "image",
+                xfadeTransition: null
               })
-      
-    
+
+
             }
             else if (items.type === "audio"){
               timeLineAudio.push({
@@ -344,7 +355,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 width: (newItem.original_duration) * pxPerSecond,
                 type: "audio"
               })
-    
+
             }
           })
           maxImageID.current = timeLineImages.length;
@@ -355,7 +366,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           setVoiceTrackResources(timeLineAudio);
         }
         }
-        
+
     }
     onLoadTimelines().then()
     return
@@ -401,22 +412,22 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           setSubtitleTrackResources((subtitleTrackResources)=>{
             subtitleTrackResources.splice(removeIndex, 1)
             return [...subtitleTrackResources]
-          }) 
-          
+          })
+
         }else if (deletedItem.id.indexOf(trackName.second_track) != -1){
-    
+
         } else if(deletedItem.id.indexOf(trackName.third_track) != -1){
           const removeIndex = imageTrackResources.findIndex((element) => deletedItem.id === element.id)
           setImageTrackResources((imageTrackResources)=>{
             imageTrackResources.splice(removeIndex, 1)
             return [...imageTrackResources]
-          }) 
+          })
         } else if (deletedItem.id.indexOf(trackName.fourth_track) != -1) {
           const removeIndex = voiceTrackResources.findIndex((element) => deletedItem.id === element.id)
           setVoiceTrackResources((voiceTrackResources)=>{
             voiceTrackResources.splice(removeIndex, 1)
             return [...voiceTrackResources]
-          }) 
+          })
         }
         toast.success("Đã xóa tài nguyên")
         break;
@@ -458,7 +469,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             trim_start: 0,
             trim_end: newItem.original_duration,
             width: (newItem.original_duration) * pxPerSecond,
-            type: "image"
+            type: "image",
+            xfadeTransition: null
           })
           setImageTrackResources([...imageTrackResources])
           maxImageID.current++
@@ -498,8 +510,6 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     fourth_track: "audio"
   }
   const saveProjectProperties = async ()=>{
-
-
     const response = await fetch("/api/video_editor/timelines", {
     method: 'POST',
     headers:{
@@ -542,21 +552,28 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
   const saveProjectAndShowPreview = async ()=>{
       await saveProjectProperties().then()
-      let totalFirstTrack = 0;
-      let totalThirdTrack = 0;
-      let totalFourthTrack = 0
-      subtitleTrackResources.forEach((el) => totalFirstTrack += el.duration)
-      imageTrackResources.forEach((el) => totalThirdTrack += el.duration)
-      voiceTrackResources.forEach((el) => totalFourthTrack += el.duration)
-      if (!(totalFirstTrack == totalFourthTrack && totalFirstTrack == totalThirdTrack)){
-        toast.warning("Độ dài các timeline không bằng nhau")
-        return
-      }
-      const response = await fetch("/api/video_editor/preview", {
-        method: 'GET',
-        headers: {
-          "Content-type":"application/json"
-        }
+      // let totalFirstTrack = 0;
+      // let totalThirdTrack = 0;
+      // let totalFourthTrack = 0
+      // subtitleTrackResources.forEach((el) => totalFirstTrack += el.duration)
+      // imageTrackResources.forEach((el) => totalThirdTrack += el.duration)
+      // voiceTrackResources.forEach((el) => totalFourthTrack += el.duration)
+      // if (!(totalFirstTrack == totalFourthTrack && totalFirstTrack == totalThirdTrack)){
+      //   toast.warning("Độ dài các timeline không bằng nhau")
+      //   return
+      // }
+      const response = await fetch("/api/compile_video", {
+          method: 'POST',
+          headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          resX: 854,
+          resY: 480,
+          sampleRate: 22050,
+          crf: 30,
+          preset: "ultrafast"
+        })
       })
       if (response.ok){
         const data = await response.json();
@@ -579,10 +596,10 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     // Check if current position overlaps with any other item
     // const overlappingItems = otherItems.filter((other) => checkOverlap(testItem, other))
 
-    while (true){
-      const testItem = { ...item, position: currentPosition }
+    while (true) {
+      const testItem = {...item, position: currentPosition}
       const overlappingItem = otherItems.find((other) => checkOverlap(testItem, other))
-      if (!overlappingItem){
+      if (!overlappingItem) {
         // if (currentPosition < 0){
         //   otherItems.forEach((e) => {e.position += item.width})
         // }
@@ -616,24 +633,48 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
   const onExportVideo = async () => {
     await saveProjectProperties().then()
-    let totalFirstTrack = 0;
-    let totalThirdTrack = 0;
-    let totalFourthTrack = 0
-    subtitleTrackResources.forEach((el) => totalFirstTrack += el.duration)
-    imageTrackResources.forEach((el) => totalThirdTrack += el.duration)
-    voiceTrackResources.forEach((el) => totalFourthTrack += el.duration)
-    if (!(totalFirstTrack == totalFourthTrack && totalFirstTrack == totalThirdTrack)){
-      toast.warning("Độ dài các timeline không bằng nhau")
-      return
-    }
+    // let totalFirstTrack = 0;
+    // let totalThirdTrack = 0;
+    // let totalFourthTrack = 0
+    // subtitleTrackResources.forEach((el) => totalFirstTrack += el.duration)
+    // imageTrackResources.forEach((el) => totalThirdTrack += el.duration)
+    // voiceTrackResources.forEach((el) => totalFourthTrack += el.duration)
+    // if (!(totalFirstTrack == totalFourthTrack && totalFirstTrack == totalThirdTrack)){
+    //   toast.warning("Độ dài các timeline không bằng nhau")
+    //   return
+    // }
 
     setTopBarProgress("Đang xuất bản...")
+    await saveProjectProperties()
     try {
+      let resX = 1920
+      let resY = 1080
+      let sampleRate = 48000
+      let crf = 20
+      let preset = "slower"
+      if (outputQuality == 1) {
+        resX = 1280
+        resY = 720
+        sampleRate = 24000
+        crf = 26
+        preset = "veryfast"
+      } else if (outputQuality == 2) {
+        sampleRate = 44100
+        crf = 23
+        preset = "medium"
+      }
       const response = await fetch("/api/compile_video", {
-        method: 'GET',
+        method: 'POST',
         headers: {
-          'Content-type' : 'application/json'
-        }
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          resX: resX,
+          resY: resY,
+          sampleRate: sampleRate,
+          crf: crf,
+          preset: preset
+        })
       })
       if (response.ok){
         const returnPackage = await response.json();
@@ -641,14 +682,115 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         setOutputURL(returnPackage.output);
       }
       setTopBarProgress("Xuất bản thành công.")
-
+      setShareDropdown(true)
     } catch (error) {
       setTopBarProgress("Xuất bản thất bại.")
     }
   }
 
+  useEffect(() => {
+    const handler = async (event: MessageEvent) => {
+      if (event.data === "auth-success") {
+        await update();
+        console.log(session)
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler); // clean up
+  }, [update]);
+
+
+  const userSignIn = async (provider) => {
+    const result = await signIn(`${provider}`, {
+      callbackUrl: "/auth-complete",
+      redirect: false,
+    });
+    if (result?.url) {
+      window.open(result.url, "_blank", "width=600,height=700");
+    }
+  }
+
+  const userSignOut = async () => {
+    const result = await signOut({
+      callbackUrl: "/auth-complete",
+      redirect: false,
+    });
+    if (result?.url) {
+      window.open(result.url, "_blank", "width=600,height=700");
+    }
+  }
+
+  const [selectedProvider,  setSelectedProvider] = useState("")
+  const [selectedPage, setSelectedPage] = useState(null)
+  const [open, setOpen] = useState(false)
+  const [formData, setFormData] = useState({ title: "", description: "" })
+  const [dialogError, setDialogError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const facebookItemClick = (page) => {
+    setSelectedPage(page)
+    setSelectedProvider("facebook")
+    setOpen(true)
+    // const response = await axios.post('/api/auth/get_facebook_view', {
+    //   videoId: "1208828534026097",
+    //   pageAccessToken: session.pages.find(paged => paged.id === "597796793425257")?.access_token
+    // });
+    // const data = response.data;
+    // console.log(data);
+  }
+
+  const googleItemClick = () => {
+    setSelectedProvider("google")
+    setOpen(true)
+    // const response = await axios.post('/api/auth/get_youtube_view', {
+    //   videoId: "iOvjiXZp010",
+    //   accessToken: session.googleAccessToken,
+    // });
+    // const data = response.data;
+    // console.log(data);
+  }
+
+  const handleConfirm = async () => {
+    if (!formData.title.trim() || !formData.description.trim()) {
+      setDialogError("Vui lòng nhập tiêu đề và mô tả.")
+      return
+    }
+    setIsSubmitting(true)
+    try {
+      if (selectedProvider === "facebook") {
+        const response = await axios.post('/api/auth/upload_facebook', {
+          pageId: selectedPage.id,
+          pageAccessToken: selectedPage.access_token,
+          title: formData.title,
+          description: formData.description,
+        });
+        const data = response.data;
+        console.log(data);
+        alert("Đăng lên Facebook thành công!")
+      } else if (selectedProvider === "google") {
+        const response = await axios.post('/api/auth/upload_youtube', {
+          accessToken: session.googleAccessToken,
+          title: formData.title,
+          description: formData.description
+        });
+        const data = response.data;
+        console.log(data);
+        alert("Đăng lên Youtube thành công!")
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.error || 'Upload failed';
+      console.error("Lỗi khi upload:", errMsg);
+      alert("Đăng lên thất bại.")
+    }
+    setDialogError("")
+    setOpen(false)
+    setFormData({ title: "", description: "" })
+    setIsSubmitting(false)
+    setSelectedProvider("")
+  }
+
   return (
-    
+
     <div className="max-w-full max-h-full">
       <div>
         <Menu id={MENU_ID}>
@@ -670,6 +812,106 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         <div>
           {topBarProgress}
         </div>
+        { shareDropdown && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  Chia sẻ <ChevronRight className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-4">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Facebook</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    { !session ? (
+                      <DropdownMenuItem onClick={() => userSignIn("facebook")}>
+                        Đăng nhập
+                      </DropdownMenuItem>
+                    ) : (
+                        <>
+                        { !session.facebookAccessToken ? (
+                          <DropdownMenuItem onClick={() => userSignIn("facebook")}>
+                            Chuyển tài khoản
+                          </DropdownMenuItem>
+                        ) : (
+                            <>
+                            { session.pages?.map((page : any) => (
+                            <DropdownMenuItem key={page.id} onClick={() => facebookItemClick(page)}>
+                              {page.name}
+                            </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuItem onClick={() => userSignOut()}>
+                              Đăng xuất
+                            </DropdownMenuItem>
+                            </>
+                        )}
+                        </>
+                    )}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Youtube</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    { !session ? (
+                        <DropdownMenuItem onClick={() => userSignIn("google")}>
+                          Đăng nhập
+                        </DropdownMenuItem>
+                    ) : (
+                        <>
+                          { !session.googleAccessToken ? (
+                              <DropdownMenuItem onClick={() => userSignIn("google")}>
+                                Chuyển tài khoản
+                              </DropdownMenuItem>
+                          ) : (
+                              <>
+                                <DropdownMenuItem onClick={googleItemClick}>
+                                  {session.user.name}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => userSignOut()}>
+                                  Đăng xuất
+                                </DropdownMenuItem>
+                              </>
+                          )}
+                        </>
+                    )}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
+        )}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="[&>button.absolute.top-4.right-4]:hidden"
+                         onInteractOutside={(e) => e.preventDefault()}
+                         onEscapeKeyDown={(e) => e.preventDefault()}>
+            <DialogHeader>
+              {selectedProvider === "facebook" && (
+                  <DialogTitle>Chia sẻ lên {selectedPage?.name}</DialogTitle>
+              )}
+              {selectedProvider === "google" && (
+                  <DialogTitle>Chia sẻ lên {session.user.name}</DialogTitle>
+              )}
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {dialogError && <p className="text-sm text-red-500">{dialogError}</p>}
+              <Input
+                  placeholder="Tiêu đề"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              />
+              <Input
+                  placeholder="Mô tả"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+            <DialogFooter>
+              <Button onClick={handleConfirm} disabled={isSubmitting}>Xác nhận</Button>
+              <DialogClose asChild>
+                <Button variant="ghost" disabled={isSubmitting}>Hủy</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <div className="flex flex-row gap-2">
           <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectProperties}>
             Lưu dự án <Save className="h-4 w-4"/>
@@ -800,35 +1042,35 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             <div className="flex items-center gap-2">
                       <span className="text-xl">T</span>
                       <Eye className="h-5 w-5" />
-                    </div>        
+                    </div>
           </div>
           <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
             <div className="flex items-center gap-2">
                       <span className="text-xl"></span>
                       <Eye className="h-5 w-5" />
-                    </div>        
+                    </div>
           </div>
           <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
             <div className="flex items-center gap-2">
                       <span className="text-xl"></span>
                       <Eye className="h-5 w-5" />
-                    </div>        
+                    </div>
           </div>
           <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
             <div className="flex items-center gap-2">
                       <span className="text-xl"></span>
                       <Eye className="h-5 w-5" />
-                    </div>        
+                    </div>
           </div>
         </div>
-        
+
 
         {/* Timeline tracks */}
         <div className="flex-1 min-w-[800px] max-w-full bg-gray-50 overflow-x-scroll relative">
-        
+
           {/* Timeline ruler */}
           <div className="flex border-b max-w-full">
-          
+
             {/* <div className="w-60 border-r flex-shrink-0"></div> */}
             <div className="flex min-w-[800px]">
               {Array.from({ length: totalAudioDuration }).map((_, i) => (
@@ -868,9 +1110,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 tasks={voiceTrackResources}
                 onResizeItem={handleTrackItemResize}>
               </TrackRow>
-            
+
           </DndContext>
-          
+
         </div>
       </div>
 

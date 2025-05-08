@@ -195,10 +195,14 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
         setProgress("Đang tạo bản xem trước...")
         try {
             const response = await fetch("/api/compile_video", {
-                method: 'GET',
+                method: 'POST',
                 headers: {
                     'Content-type': 'application/json'
-                }
+                },
+                body: JSON.stringify({
+                    crf: 32,
+                    preset: "ultrafast"
+                })
             })
             setProgress("Hoàn thành! Đang chuyển hướng...")
             return true;
@@ -318,8 +322,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                         onClick={async event => {
                             event.preventDefault();
                             await saveResources();
-                            let result = await generatePreview();
-                            if (result) onConfirmImages();
+                            onConfirmImages();
                         }}>
                         Xác nhận thay đổi và tạo bản xem trước
                     </Button>
