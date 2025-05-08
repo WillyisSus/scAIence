@@ -323,7 +323,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 trim_start: 0,
                 trim_end: newItem.original_duration,
                 width: (newItem.original_duration) * pxPerSecond,
-                type: "subtitle"
+                type: "subtitle",
+                xfadeTransition: ""
               })
 
             }
@@ -338,7 +339,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 trim_end: newItem.original_duration,
                 width: (newItem.original_duration) * pxPerSecond,
                 type: "image",
-                xfadeTransition: null
+                xfadeTransition: ""
               })
 
 
@@ -353,7 +354,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 trim_start: 0,
                 trim_end: newItem.original_duration,
                 width: (newItem.original_duration) * pxPerSecond,
-                type: "audio"
+                type: "audio",
+                xfadeTransition: ""
               })
 
             }
@@ -449,7 +451,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             trim_start: 0,
             trim_end: newItem.original_duration,
             width: (newItem.original_duration) * pxPerSecond,
-            type: "subtitle"
+            type: "subtitle",
+            xfadeTransition: ""
           })
           setSubtitleTrackResources([...subtitleTrackResources])
           maxSubtitleID.current++
@@ -470,7 +473,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             trim_end: newItem.original_duration,
             width: (newItem.original_duration) * pxPerSecond,
             type: "image",
-            xfadeTransition: null
+            xfadeTransition: ""
           })
           setImageTrackResources([...imageTrackResources])
           maxImageID.current++
@@ -491,7 +494,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             trim_start: 0,
             trim_end: newItem.original_duration,
             width: (newItem.original_duration) * pxPerSecond,
-            type: "audio"
+            type: "audio",
+            xfadeTransition: ""
           })
           setVoiceTrackResources([...voiceTrackResources])
           maxAudioID.current++

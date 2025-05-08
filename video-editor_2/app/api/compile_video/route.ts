@@ -43,7 +43,8 @@ export async function POST(req: { json: () => any; }, res: any) {
     const audio_list = timeline_datajson.find(item => item.type === "audio").items
     let imagesCount = image_list.length
     const audiosCount = audio_list.length
-    image_list[imagesCount-1].xfadeTransition = null
+    if (imagesCount > 0)
+        image_list[imagesCount-1].xfadeTransition = ""
     let filters = []
     let imageConcat: {
         filter: string
@@ -107,7 +108,7 @@ export async function POST(req: { json: () => any; }, res: any) {
                 outputs: `v${index}`
             })
         }
-        if (image.xfadeTransition) {
+        if (!image.xfadeTransition.isBlank) {
             xfadeExt += 1
         } else {
             imageConcat.inputs.push(`v${index}`)
@@ -119,7 +120,7 @@ export async function POST(req: { json: () => any; }, res: any) {
         } else {
             image_list[index].duration =  image.duration + xfadeExt * xfadeDuration / 2
         }
-        if (index > 0 && image_list[index-1].xfadeTransition) {
+        if (index > 0 && !image_list[index-1].xfadeTransition.isBlank) {
             xfadeExt -= 1
         }
     })
