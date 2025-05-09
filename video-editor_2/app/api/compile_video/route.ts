@@ -156,7 +156,7 @@ export async function POST(req: { json: () => any; }, res: any) {
     await new Promise<void>((resolve, reject) => {
         ff.complexFilter(filters)
             .outputOptions(['-map [v]', '-map [a]', '-pix_fmt yuv420p', `-crf ${crf}`, `-preset ${preset}`])
-            .output(`./public/${project_name}/${outputURL}`)
+            .output(`./public/${project_name}/exports/${outputURL}`)
             .videoCodec(videoEncode)
             .audioCodec(audioEncode)
             .fps(fps)
@@ -174,5 +174,5 @@ export async function POST(req: { json: () => any; }, res: any) {
             })
             .run()
     })
-    return NextResponse.json({output: `${project_name}/${outputURL}`})
+    return NextResponse.json({output: `${project_name}/exports/${outputURL}`})
 }

@@ -735,23 +735,23 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     setSelectedPage(page)
     setSelectedProvider("facebook")
     setOpen(true)
-    const response = await axios.post('/api/auth/get_facebook_view', {
-      videoId: "981835267445768",
-      pageAccessToken: session.pages.find(paged => paged.id === "597796793425257")?.access_token
-    });
-    const data = response.data;
-    console.log(data);
+    // const response = await axios.post('/api/auth/get_facebook_view', {
+    //   videoId: "981835267445768",
+    //   pageAccessToken: session.pages.find(paged => paged.id === "597796793425257")?.access_token
+    // });
+    // const data = response.data;
+    // console.log(data);
   }
 
   const googleItemClick = async () => {
     setSelectedProvider("google")
     setOpen(true)
-    const response = await axios.post('/api/auth/get_youtube_view', {
-      videoId: "ActBtBjnjxY",
-      accessToken: session.googleAccessToken,
-    });
-    const data = response.data;
-    console.log(data);
+    // const response = await axios.post('/api/auth/get_youtube_view', {
+    //   videoId: "ActBtBjnjxY",
+    //   accessToken: session.googleAccessToken,
+    // });
+    // const data = response.data;
+    // console.log(data);
   }
 
   const handleConfirm = async () => {
@@ -765,6 +765,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         const response = await axios.post('/api/auth/upload_facebook', {
           pageId: selectedPage.id,
           pageAccessToken: selectedPage.access_token,
+          pageName: selectedPage.name, 
           title: formData.title,
           description: formData.description,
         });
@@ -775,6 +776,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         const response = await axios.post('/api/auth/upload_youtube', {
           channelId: session.googleUserId,
           accessToken: session.googleAccessToken,
+          channel: session.user.name,
           title: formData.title,
           description: formData.description
         });

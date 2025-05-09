@@ -9,9 +9,9 @@ export async function POST(req: NextRequest) {
     const appdatajson = await JSON.parse(appdata);
     const project_name = appdatajson.current_project;
     try {
-        const { pageId, pageAccessToken, title, description, filename = "output_video.mp4" } = await req.json();
+        const { pageId, pageAccessToken, pageName, title, description, filename = "output_video.mp4" } = await req.json();
 
-        const videoPath = `./public/${project_name}/${filename}`
+        const videoPath = `./public/${project_name}/exports/${filename}`
 
         const videoStream = fs.createReadStream(videoPath);
         const formData = new FormData();
@@ -45,20 +45,26 @@ export async function POST(req: NextRequest) {
             if (pageIndex != -1) {
                 sharedatajson.facebook[pageIndex].video.push({
                     local_path: videoPath,
-                    upload_id: uploadResponse.data.id
+                    upload_id: uploadResponse.data.id,
+                    title: title,
+                    description: description
+                    
                 })
             } else {
                 sharedatajson.facebook.push({
                     pageID: pageId,
+                    pageName: pageName,
                     video: [{
                         local_path: videoPath,
-                        upload_id: uploadResponse.data.id
+                        upload_id: uploadResponse.data.id,
+                        title: title,
+                        description: description
                     }]
                 })
             }
             await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify(sharedatajson));
         } catch (err) {
-            await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify({facebook:[{pageID:pageId,video:[{local_path:videoPath,upload_id:uploadResponse.data.id}]}],youtube:[]}))
+            await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify({facebook:[{pageID:pageId, pageName: pageName,video:[{local_path:videoPath,upload_id:uploadResponse.data.id, title: title,description: description}]}],youtube:[]}))
         }
 
         return NextResponse.json({

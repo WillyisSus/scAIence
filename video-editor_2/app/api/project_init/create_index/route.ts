@@ -15,6 +15,7 @@ export async function POST(req: { json: () => any; }, res: any)  {
         await fsPromises.mkdir(`public/${name}/images`);
         await fsPromises.mkdir(`public/${name}/preset`);
         await fsPromises.mkdir(`public/${name}/sounds`);
+        await fsPromises.mkdir(`public/${name}/exports`);
 
         try {
             const appdata = await fsPromises.readFile(`public/appdata.json`);

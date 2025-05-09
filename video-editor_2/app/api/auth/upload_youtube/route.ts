@@ -9,9 +9,9 @@ export async function POST(req: NextRequest) {
         const appdatajson = JSON.parse(appdata);
         const project_name = appdatajson.current_project;
 
-        const { channelId, accessToken, title, description, privacyStatus = "public", filename = "output_video.mp4" } = await req.json();
+        const { channelId, accessToken, channel, title, description, privacyStatus = "public", filename = "output_video.mp4" } = await req.json();
 
-        const videoPath = `./public/${project_name}/${filename}`;
+        const videoPath = `./public/${project_name}/exports/${filename}`;
         const videoSize = fs.statSync(videoPath).size;
 
         const metadata = {
@@ -59,20 +59,25 @@ export async function POST(req: NextRequest) {
             if (pageIndex != -1) {
                 sharedatajson.youtube[pageIndex].video.push({
                     local_path: videoPath,
-                    upload_id: finalUpload.data.id
+                    upload_id: finalUpload.data.id,
+                    title: title,
+                    description: description
                 })
             } else {
-                sharedatajson.facebook.push({
+                sharedatajson.youtube.push({
                     pageID: channelId,
+                    pageName: channel,
                     video: [{
                         local_path: videoPath,
-                        upload_id: finalUpload.data.id
+                        upload_id: finalUpload.data.id,
+                        title: title,
+                        description: description
                     }]
                 })
             }
             await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify(sharedatajson));
         } catch (err) {
-            await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify({facebook:[],youtube:[{pageID:channelId,video:[{local_path:videoPath,upload_id:finalUpload.data.id}]}]}))
+            await fsPromises.writeFile(`public/uploaddata.json`, JSON.stringify({facebook:[],youtube:[{pageID:channelId, pageName: channel,video:[{local_path:videoPath,upload_id:finalUpload.data.id, title: title, description: description}]}]}))
         }
 
         return NextResponse.json({
