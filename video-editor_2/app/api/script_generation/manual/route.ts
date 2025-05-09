@@ -10,12 +10,13 @@ export async function POST(req: { json: () => any; }, res: any) {
         const data = await req.json()
         const prompt = data.script
         const vibe = data.vibe;
+        const audience = data.audience;
 
         const response = await ai.models.generateContent({
             model: "gemini-2.0-flash",
             contents: prompt,
             config: {
-                systemInstruction: "The answers are split into paragraphs only. Do not use bullets or numbering when answer. The answer will have a vibe of " + vibe,
+                systemInstruction: "The answers are split into paragraphs only. Do not use bullets or numbering when answer. The answer will have a vibe of " + vibe + " , and the listening audience will lean heavily towards " + audience,
             //     tools: [{googleSearchRetrieval:{}}],
             }
         });
