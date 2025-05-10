@@ -178,6 +178,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
 
   const onGenerateImagesAndVoiceWithScript = async () => {
     try {
+      toast.warn("Đang thực hiện tạo tài nguyên, xin chờ");
       let prompt_text_area = document.getElementById("my-text-area");
       prompt_text_area && prompt_text_area.nodeValue ? setScriptOutput(prompt_text_area.nodeValue) : null;
 
@@ -188,7 +189,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
 
       if (temp_array.length === 0) return;
 
-      setProgress("Clearing previous assets...")
+      setProgress("Dọn các tài nguyên cũ...")
       const deleteResponse = await fetch('api/assets_data/clear_assets', {
         method: 'DELETE'
       })
@@ -197,7 +198,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
         return;
 
       for (const s of temp_array) {
-        setProgress("Generating image " + (s.asset_id) + " out of " + (temp_array.length) + "...")
+        setProgress("Tạo hình ảnh " + (s.asset_id) + "/" + (temp_array.length) + "...")
         const image_response = await fetch('/api/image_generation', {
           method: 'POST',
           headers: {
@@ -215,7 +216,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
           s.image_url = image_result.output;
         }
 
-        setProgress("Generating voice " + (s.asset_id) + " out of " + (temp_array.length) + "...")
+        setProgress("Tạo giọng nói " + (s.asset_id) + "/" + (temp_array.length) + "...")
         const voice_response = await fetch('/api/voice_generation', {
           method: 'POST',
           headers: {
@@ -235,7 +236,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
         }
       }
 
-      setProgress("Saving data...")
+      setProgress("Lưu tài nguyên...")
       await fetch('/api/assets_data', {
         method: 'POST',
         headers: {
@@ -245,7 +246,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
           my_assets: temp_array
         })
       })
-      setProgress("Finished.")
+      setProgress("Hoàn tất.")
     }
     catch (error) {
       setProgress("Error")
@@ -253,7 +254,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
   }
 
   const onGenerateVideo = async () => {
-    setProgress("Generating Video... (might take a while)")
+    setProgress("Đang tạo video, có thể sẽ mất 1 lúc")
 
     await fetch('/api/video_generation', {
       method: 'POST',
@@ -266,7 +267,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
       })
     })
 
-    setProgress("Video done!")
+    setProgress("Video đã tạo")
   }
 
   const saveLocalFile = async (file: File) => {
@@ -274,13 +275,13 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
     reader.readAsDataURL(file);
     reader.onload = function (evt) {
       console.log(file.size);
-      toast.success("File uploaded successfully");
+      toast.success("Tệp được đăng tải thành công!");
       if (reader.result == null) return;
       let temp : string = reader.result.toString();
       setScriptFile(temp.split(',')[1])
     }
     reader.onerror = function (evt) {
-      toast.error("File uploaded failed");
+      toast.error("Tệp đăng tải thất bại.");
     }
   }
 
@@ -341,10 +342,16 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
                           if (event.target.files == null) return;
                           setScriptFileName(event.target.value);
                           const input_file = event.target.files[0];
-                          if (input_file.size <= 10485760)
+                          if (input_file.size >= 10485760) {
+                            toast.error("Tệp phải bé hơn 10MB");
+                          }
+                          else if (input_file.name.split(".").pop() !== "pdf") {
+                            toast.error("Tệp cần là pdf");
+                          }
+                          else {
                             await saveLocalFile(input_file);
-                          else
-                            toast.error("File is larger than 10MB");
+                          }
+
                         }}/>
                         </div>
 
@@ -372,7 +379,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
                   <option value={"Comical"}>Hài hước</option>
                   <option value={"Serious"}>Nghiêm túc</option>
                   <option value={"Lively"}>Sống động</option>
-                  <option value={"Descriptive"}>Kỹ càng</option>
+                  <option value={"Descriptive"}>Chi tiết</option>
                 </select>
                 <ChevronDown
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"/>
@@ -383,7 +390,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
               <label className="block mb-2 font-medium">Đối tượng</label>
               <div className="relative w-full">
                 <select className="w-full p-2 border rounded appearance-none pr-10"
-                        onChange={event => setScriptVibe(event.target.value)} value={scriptVibe}>
+                        onChange={event => setScriptAudience(event.target.value)} value={scriptAudience}>
                   <option value={"Everyone"}>Mọi người</option>
                   <option value={"Children"}>Trẻ em</option>
                   <option value={"Students"}>Học sinh</option>
@@ -438,7 +445,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
               <label className="block mb-2 font-medium">Phong cách</label>
               <div className="relative w-full">
                 <select className="w-full p-2 border rounded appearance-none pr-10" onChange={event => setImageVibe(event.target.value)}>
-                  <option value={"Realistic"}>Hiện thực</option>
+                  <option value={"Realistic"}>Chân thực</option>
                   <option value={"Cartoon"}>Hoạt hình</option>
                   <option value={"Painting"}>Tranh vẽ</option>
                   <option value={"Journalistic"}>Báo chí</option>
@@ -509,12 +516,12 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
 
             <div className="flex justify-end gap-4 mt-auto">
               <span className="text-center justify-self-center content-center">{progress}</span>
-              <Button variant="outline" className="px-6" onClick={async () => {
-                if (scriptOutput.length === 0) {
-                  toast.error("Khu vực kịch bản đang trống!")
-                  return;
-                }
-                await onGenerateVideo();
+              <Button hidden={true} variant="outline" className="px-6" onClick={async () => {
+                // if (scriptOutput.length === 0) {
+                //   toast.error("Khu vực kịch bản đang trống!")
+                //   return;
+                // }
+                // await onGenerateVideo();
               }}>
                 Tạo video AI
               </Button>

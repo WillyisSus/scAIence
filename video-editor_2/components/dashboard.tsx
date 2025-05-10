@@ -30,7 +30,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const [openShare, setOpenShare] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [projectNameValue, setProjectNameValue] = useState("temp");
+  const [projectNameValue, setProjectNameValue] = useState("project-name-sample");
   const [is_data_loaded, setDataLoaded] = useState(false)
   const [projectList, setProjectList] = useState([]);
   const [exportedFiles, setExportedFiles] = useState([])
@@ -350,6 +350,17 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   // }
 
   const initProject = async () => {
+    if (projectList.includes(projectNameValue)){
+      toast.error("Đã tồn tại dự an tên này");
+      return false;
+    }
+
+    else if (!checkValidFileName(projectNameValue)){
+      toast.error("Tên không hợp lệ.");
+      return false;
+    }
+
+
     const response = await fetch('/api/project_init/create_index', {
       method: 'POST',
       headers: {
@@ -361,7 +372,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
     })
 
     if (response.ok) {
-      toast.success("Create project successfully");
+      toast.success("Tạo project thành công!");
       return true;
     }
   }
@@ -378,6 +389,15 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
       })
     })
   }
+
+  const checkValidFileName= (fname : string) => {
+    const badCharacter = /^[^\\/:*?"<>|]+$/;
+    const badStartPeriod = /^\./;
+    const badName = /^(nul|prn|con|lpt[0-9]|com[0-9])(\.|$)/i;
+    // return function isValid(fname){
+    return badCharacter.test(fname) && !badStartPeriod.test(fname) && !badName.test(fname);
+    // }
+  };
 
   return (
     <div className="container flex flex-col items-center justify-center mx-auto py-8 gap-2 px-4">
@@ -759,7 +779,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
           </div>
         </div>
       </div>
-      <ReactModal isOpen={showCreateModal} ariaHideApp={false} >
+      <ReactModal isOpen={showCreateModal} ariaHideApp={false}>
         {/*<Modal.Header closeButton>*/}
         {/*  <Modal.Title>Create a New Project</Modal.Title>*/}
         {/*</Modal.Header>*/}
@@ -767,40 +787,18 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
 
         {/*</Modal.Body>*/}
         {/*<Modal.Footer>*/}
+        <label htmlFor={"project-name-field"}>Tên dự án (có quy định cấu trúc như tên thư mục)</label>
+
         <input
           type="text"
           placeholder="Nhập tên của project"
-          className="w-full p-2 border rounded m-2"
-          id="my-prompt"
+          className="p-2 border rounded m-2"
+          id="project-name-field"
           value={projectNameValue}
           onChange={event => setProjectNameValue(event.target.value)}
         />
 
-        {/*<div className="relative w-full">*/}
-        {/*  <select className="w-full p-2 m-2 border rounded appearance-none">*/}
-        {/*    <option>Tiếng Anh</option>*/}
-        {/*    <option>Tiếng Trung</option>*/}
-        {/*    <option>Tiếng Việt</option>*/}
-        {/*    <option>Tiếng Hàn</option>*/}
-        {/*    <option>...</option>*/}
-
-        {/*  </select>*/}
-        {/*  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"/>*/}
-        {/*</div>*/}
-
-        {/*<label htmlFor="projectFolder">*/}
-        {/*  /!*<Button className="p-3 m-2">*!/*/}
-        {/*    Select Project Folder*/}
-        {/*  /!*</Button>*!/*/}
-        {/*</label>*/}
-        {/*<input id="projectFolder" directory="" webkitdirectory="" type="file" onChange={event => {*/}
-        {/*  let theFiles = event.target.files;*/}
-        {/*  let relativePath = theFiles[0].webkitRelativePath;*/}
-        {/*  let folder = relativePath.split("/");*/}
-        {/*  alert(folder[0]);*/}
-        {/*}}/>*/}
-
-        <div className="w-full h-50 justify-end flex">
+        <div className="">
           <Button onClick={handleClose} className="p-3 m-2">
             Đóng
           </Button>

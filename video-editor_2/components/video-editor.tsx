@@ -926,13 +926,15 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectAndShowPreview}>
             Xem trước <PlayIcon className="h-4 w-4"/>
           </Button>
-          <select className="w-full p-2 border border-black rounded pr-10" onChange={event => {
-            setOutputQuality(event.target.value)
-          }} value={outputQuality}>
-            <option value={1}>Low</option>
-            <option value={2}>Medium</option>
-            <option value={3}>High</option>
-          </select>
+          <Button variant="outline" className="flex btn-dark items-center gap-2">
+            <select onChange={event => {
+              setOutputQuality(parseInt(event.target.value))
+            }} value={outputQuality} className="bg-white">
+              <option value={1}>Thấp</option>
+              <option value={2}>Trung bình</option>
+              <option value={3}>Cao</option>
+            </select>
+          </Button>
           <Button variant="outline" className="flex items-center gap-2" onClick={onExportVideo}>
             Xuất bản <ArrowRightFromLine className="h-4 w-4"/>
           </Button>

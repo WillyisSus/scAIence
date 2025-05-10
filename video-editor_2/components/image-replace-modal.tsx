@@ -64,7 +64,7 @@ export default function ImageReplaceModal({ showImageModal, setShowImageModal, s
             {showImageModal && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white p-6 rounded-lg w-1/3 h-1/2 shadow-lg relative flex flex-col">
-                        <h2 className="text-lg font-semibold mb-4">Replace Image</h2>
+                        <h2 className="text-lg font-semibold mb-4">Thay tài nguyên ảnh</h2>
 
                         {uploadedImage && (
                             <div className="my-auto flex justify-center items-center h-1/2">
@@ -91,13 +91,13 @@ export default function ImageReplaceModal({ showImageModal, setShowImageModal, s
                                     setUploadedImage(null)
                                 }}
                             >
-                                Cancel
+                                Hủy
                             </button>
                             <button
                                 className="bg-green-600 text-white px-4 py-2 rounded"
                                 onClick={handleSaveImage}
                             >
-                                Save Image
+                                Lưu ảnh
                             </button>
                         </div>
                     </div>

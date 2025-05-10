@@ -67,20 +67,20 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
             {showAudioModal && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white p-6 rounded-lg w-1/3 h-1/2 shadow-lg relative flex flex-col">
-                        <h2 className="text-lg font-semibold mb-4">Replace Audio</h2>
+                        <h2 className="text-lg font-semibold mb-4">Thay thế âm thanh</h2>
 
                         <div className="mb-4">
                             <button
                                 className={`px-4 py-2 mr-2 rounded ${mode === 'upload' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
                                 onClick={() => setMode('upload')}
                             >
-                                Upload Audio
+                                Đăng tải âm thanh
                             </button>
                             <button
                                 className={`px-4 py-2 rounded ${mode === 'record' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
                                 onClick={() => setMode('record')}
                             >
-                                Record Audio
+                                Ghi âm giọng nói
                             </button>
                         </div>
 
@@ -121,13 +121,13 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
                                     setTempAudioBlob(null)
                                 }}
                             >
-                                Cancel
+                                Hủy
                             </button>
                             <button
                                 className="bg-green-600 text-white px-4 py-2 rounded"
                                 onClick={handleSaveAudio}
                             >
-                                Save Audio
+                                Lưu âm thanh
                             </button>
                         </div>
                     </div>
