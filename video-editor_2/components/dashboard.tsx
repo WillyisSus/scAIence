@@ -37,7 +37,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const [openModalPlayer, setOpenModalPlayer] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [projectNameValue, setProjectNameValue] = useState("temp");
+  const [projectNameValue, setProjectNameValue] = useState("project-name-sample");
   const [is_data_loaded, setDataLoaded] = useState(false)
   const [projectList, setProjectList] = useState([]);
   const [exportedFiles, setExportedFiles] = useState([])
@@ -372,6 +372,17 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   // }
 
   const initProject = async () => {
+    if (projectList.includes(projectNameValue)){
+      toast.error("Đã tồn tại dự an tên này");
+      return false;
+    }
+
+    else if (!checkValidFileName(projectNameValue)){
+      toast.error("Tên không hợp lệ.");
+      return false;
+    }
+
+
     const response = await fetch('/api/project_init/create_index', {
       method: 'POST',
       headers: {
@@ -383,7 +394,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
     })
 
     if (response.ok) {
-      toast.success("Create project successfully");
+      toast.success("Tạo project thành công!");
       return true;
     }
   }
@@ -400,6 +411,15 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
       })
     })
   }
+
+  const checkValidFileName= (fname : string) => {
+    const badCharacter = /^[^\\/:*?"<>|]+$/;
+    const badStartPeriod = /^\./;
+    const badName = /^(nul|prn|con|lpt[0-9]|com[0-9])(\.|$)/i;
+    // return function isValid(fname){
+    return badCharacter.test(fname) && !badStartPeriod.test(fname) && !badName.test(fname);
+    // }
+  };
 
   return (
     <div className="container flex flex-col items-center justify-center mx-auto py-8 gap-2 px-4">
