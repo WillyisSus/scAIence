@@ -27,10 +27,18 @@ export async function POST(req: { json: () => any; }, res: any) {
                 appdatajson.current_project = ""
                 if (appdatajson.current_page === 4) appdatajson.current_page = 1
             }
+            
         }
         console.log(appdatajson)
+        const results = []
+        for (const project of app_projects){
+            const projectIndex = await fsPromises.readFile(`public/${project}/index.json`)
+            const projectIndexJson = await JSON.parse(projectIndex.toString())
+            console.log(projectIndexJson)
+            results.push(projectIndexJson)
+        }
         await fsPromises.writeFile("./public/appdata.json", JSON.stringify({...appdatajson, projects_list: app_projects}))
-        return NextResponse.json({ output: JSON.stringify(appdatajson.projects_list)})
+        return NextResponse.json({ output: JSON.stringify(results)})
     }
     catch (error) {
         console.log(error)
