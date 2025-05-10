@@ -10,7 +10,8 @@ export async function POST(req: { json: () => any; }, res: any)  {
         await fsPromises.writeFile(`public/${name}/index.json`, JSON.stringify({
             project_name : name,
             date_created : Date.now(),
-            description : "A project"
+            description : "A project",
+            status: 1
         }));
         await fsPromises.mkdir(`public/${name}/images`);
         await fsPromises.mkdir(`public/${name}/preset`);

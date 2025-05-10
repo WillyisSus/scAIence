@@ -23,8 +23,11 @@ export async function POST(req: { json: () => any; }, res: any) {
         const project_name = appdatajson.current_project;
         const assets_data = reqData.profile;
         console.log(assets_data[2]);
+        const projectindex = await fsPromises.readFile(`public/${project_name}/index.json`)
+        const projectindexjson = await JSON.parse(projectindex.toString())
         const save_data = JSON.stringify(assets_data);
         await fsPromises.writeFile(`public/${project_name}/timeline_data.json`, save_data);
+        await fsPromises.writeFile(`public/${project_name}/index.json`, JSON.stringify({...projectindexjson, status: 4}))
         return NextResponse.json({ output: "we good" })
     }catch(err){
         return NextResponse.json({ output: "dying" })

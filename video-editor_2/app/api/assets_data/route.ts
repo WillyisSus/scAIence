@@ -6,11 +6,14 @@ export async function POST(req: { json: () => any; }, res: any) {
         const appdata = await fsPromises.readFile(`public/appdata.json`);
         const appdatajson = await JSON.parse(appdata.toString());
         const project_name = appdatajson.current_project;
-
+        const projectindex = await fsPromises.readFile(`public/${project_name}/index.json`)
+        const projectindexjson = await JSON.parse(projectindex.toString())
+        console.log(projectindexjson)
         const data = await req.json();
         const assets_data = data.my_assets;
         const save_data = JSON.stringify(assets_data);
         await fsPromises.writeFile(`public/${project_name}/assets_data.json`, save_data);
+        await fsPromises.writeFile(`public/${project_name}/index.json`, JSON.stringify({...projectindexjson, status: 2}))
         return NextResponse.json({ output: "we good" })
     }
     catch (error) {

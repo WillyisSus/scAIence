@@ -21,13 +21,20 @@ import YouTubePlayer from "react-player/youtube";
 import { AsyncResource } from "async_hooks";
 interface DashboardProps {
   onCreateVideo: () => void
-  onGoToProject: () => void
+  onGoToProject: (video:string) => void
 }
 
 export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardProps) {
+
+  const projectTableRef = useRef<HTMLDivElement | null>(null)
+  const expotedVideoRef = useRef<HTMLDivElement | null>(null)
+  const uploadedVideoRef = useRef<HTMLDivElement | null>(null)
+  const statisticBoardRef = useRef<HTMLDivElement | null>(null)
+
   const [selectedVideos, setSelectedVideos] = useState("")
   const [open, setOpen] = useState(false)
   const [openShare, setOpenShare] = useState(false)
+  const [openModalPlayer, setOpenModalPlayer] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [projectNameValue, setProjectNameValue] = useState("temp");
@@ -37,7 +44,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const { data: session, update } = useSession();
   const [uploadedDataFacebook, setUploadedDataFacebook] = useState([])
   const [uploadedDataYoutube, setUploadedDataYoutube] = useState([])
-  const [uploadedVideoUrl, setUploadedVideoUrl] = useState("https://www.youtube.com/watch?v=_PSjoVXFGAQ")
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState("")
   const [selectedProvider,  setSelectedProvider] = useState("")
   const [selectedPage, setSelectedPage] = useState(null)
   const [selectedProjectForDeletion, setSelectedProjectForDeletion] = useState([])
@@ -47,6 +54,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const oldLikeCount = useRef(0)
   const [formData, setFormData] = useState({ title: "", description: "" })
   const [selectedPageDropdownText, setSelectedPageDropdownText] = useState("")
+  const [dashboardVideoModal, setDashboardVideoModal] = useState("")
   const MENU_ID = "project-context-menu"
   const { show } = useContextMenu({ id: MENU_ID })
   const getProjectNameAndShowMenu = (event) => {
@@ -163,10 +171,18 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
       case "go_to_video_editor": {
         console.log(props.project_name)
         await selectProject(props.project_name)
-        onGoToProject()
+        onGoToProject(props.project_name)
         break
       }
     }
+  }
+
+  const handleShowVideOnModalPlayer = (video:string) => {
+    const pathNames = video.split("\\")
+    console.log(pathNames.splice(0, 1))
+    
+    setDashboardVideoModal(pathNames.join('/'))
+    setOpenModalPlayer(true)
   }
   const handleClose = () => setShowCreateModal(false);
   const handleShow = () => setShowCreateModal(true);
@@ -263,6 +279,9 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
     setSelectedPage(page)
     setSelectedProvider("facebook")
     setUploadedVideoUrl(`https://www.facebook.com/watch/?v=${video.upload_id}`)
+    statisticBoardRef.current?.scrollIntoView({
+      behavior: 'smooth'
+    })
     const response = await axios.post('/api/auth/get_facebook_view', {
       videoId: video.upload_id,
       pageAccessToken: session.pages.find(paged => paged.id === page.pageID)?.access_token
@@ -282,6 +301,9 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const googleItemClick = async (video:{}) => {
     if (!video) return
     setUploadedVideoUrl(`https://www.youtube.com/watch?v=${video.upload_id}`)
+    statisticBoardRef.current?.scrollIntoView({
+      behavior: 'smooth'
+    })
     setSelectedProvider("google")
     const response = await axios.post('/api/auth/get_youtube_view', {
       videoId: video.upload_id,
@@ -382,7 +404,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   return (
     <div className="container flex flex-col items-center justify-center mx-auto py-8 gap-2 px-4">
       <Menu id={MENU_ID}>
-        <Item id="go_to_video_editor" onClick={handleProjectContextMenuItemClick}> Chỉnh sửa Timeline dự án</Item>
+        <Item id="go_to_video_editor" onClick={handleProjectContextMenuItemClick}>Vào dự án</Item>
         <Item id="delete" onClick={handleProjectContextMenuItemClick}> Xóa dự án </Item>
 
       </Menu>
@@ -519,11 +541,11 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
       <h2 className="font-bold font-mono text-2xl">Video đã được xuất bản</h2>
       <div id="exported-videos" className="border flex flex-col justify-center items-center w-full rounded-lg overflow-hidden mb-8 min-h-20">
         {exportedFiles.length <= 0 ? (
-          <div>
-            <span className="text-xl py-8  font-bold text-center">Chưa có video được xuất bản</span>
-            <div className="flex flex-row items-center justify-evenly w-[50%] py-2">
+          <div className="w-full flex flex-col justify-center items-center py-8">
+            <span className="text-xl font-bold text-center">Chưa có video được xuất bản</span>
+            <div className="flex flex-row items-center justify-evenly w-[50%] max-w-96 min-w-72 py-2">
               <span className="font-bold text-green-700"> Xuất bản video </span> hoặc
-              <button className="btn w-40 h-10 rounded-l rounded px-2  flex flex-row
+              <button onClick={handleShow} className="btn w-40 h-10 rounded-l rounded px-2  flex flex-row
               text-white bg-black border-2 border-black hover:bg-white hover:text-black transition-colors
               text-center items-center justify-between">Tạo dự án mới <SquarePlus></SquarePlus></button>
             </div>
@@ -547,7 +569,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                       text-white bg-black border-black border
                       hover:text-black hover:bg-white
                       transition-colors ease-linear
-                      "> Chiếu video <i className="pi pi-play"></i> </button>
+                      " onClick={()=>handleShowVideOnModalPlayer(exportedFile)}> Chiếu video <i className="pi pi-play"></i> </button>
                     </td>
                     <td className="p-4 text-left">
                     <button className="w-fit h-fit py-2 px-2 rounded-lg flex items-center gap-2
@@ -565,7 +587,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
         )}
       </div>
       <h2 className="font-bold font-mono text-2xl">Video đã được đăng tải</h2>
-      <div id="uploaded-data" className="border flex flex-col justify-center items-center w-full  rounded-lg overflow-hidden mb-8 min-h-20">
+      <div ref={uploadedVideoRef} id="uploaded-data" className="border flex flex-col justify-center items-center w-full  rounded-lg overflow-hidden mb-8 min-h-20">
         {!session?
           (<div className="py-8 flex flex-col items-center justify-center">
             <span className="text-xl font-bold text-center">Đăng nhập vào nền tảng tương ứng để xem video đã đăng tải</span>
@@ -736,84 +758,107 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
         )}
       </div>
       <h2 className="font-bold font-mono text-2xl">Hiệu suất hiện tại của một video</h2>
-      <div id="statistic-board" className="py-4 border flex flex-col gap-3 justify-center items-center w-full  rounded-lg overflow-hidden mb-8 min-h-20">
-        <ReactPlayer controls style={{
-          width: '80%'
-        }} url={uploadedVideoUrl}></ReactPlayer>
-        <div className="w-full flex flex-col justify-center items-center ">
-          <div className="w-[30%] max-w-80 min-w-56 py-4 px-2 font-bold justify-between flex flex-row items-center ">
-            <div>
-              <i className="pi pi-eye"/> Lượt xem: {latestViewCount}
-            </div>
-            <div className="text-green-600">
-              {latestViewCount - oldViewCount.current} <i className="pi pi-arrow-up"/>
-            </div>
-          </div>
-          <div className="w-[30%] max-w-80 min-w-56 py-4 px-2 font-bold justify-between flex flex-row items-center ">
-          <div>
-              <i className="pi pi-thumbs-up"/> Lượt thích: {latestLikeCount}
-            </div>
-            <div className="text-green-600">
-              {latestLikeCount - oldLikeCount.current} <i className="pi pi-arrow-up"/>
-            </div>
+      <div ref={statisticBoardRef} id="statistic-board" className="py-4 border flex flex-col gap-3 justify-center items-center w-full  rounded-lg overflow-hidden mb-8 min-h-20">
+        {
+          uploadedVideoUrl.length === 0 ? 
+          (
+            <div className="w-full flex flex-col justify-center items-center py-8">
+          <span className="text-xl font-bold text-center">Chưa chọn video để xem hiệu suất</span>
+          <div className="flex flex-row items-center justify-evenly w-[50%] max-w-96 min-w-72 py-2">
+            <button onClick={() => {
+              uploadedVideoRef.current?.scrollIntoView({
+                behavior: 'smooth'
+              })
+            }
+            } className="btn w-56 h-10 rounded-l rounded px-2  flex flex-row
+            text-white bg-black border-2 border-black hover:bg-white hover:text-black transition-colors
+            text-center items-center justify-between">Chọn một video để xem <i className="pi pi-angle-double-up"></i></button>
           </div>
         </div>
+          ):(
+            <>
+            <ReactPlayer controls style={{
+              width: '80%'
+            }} url={uploadedVideoUrl}></ReactPlayer>
+            <div className="w-full flex flex-col justify-center items-center ">
+              <div className="w-[30%] max-w-80 min-w-56 py-4 px-2 font-bold justify-between flex flex-row items-center ">
+                <div>
+                  <i className="pi pi-eye"/> Lượt xem: {latestViewCount}
+                </div>
+                <div className="text-green-600">
+                  {latestViewCount - oldViewCount.current} <i className="pi pi-arrow-up"/>
+                </div>
+              </div>
+              <div className="w-[30%] max-w-80 min-w-56 py-4 px-2 font-bold justify-between flex flex-row items-center ">
+              <div>
+                  <i className="pi pi-thumbs-up"/> Lượt thích: {latestLikeCount}
+                </div>
+                <div className="text-green-600">
+                  {latestLikeCount - oldLikeCount.current} <i className="pi pi-arrow-up"/>
+                </div>
+              </div>
+            </div>
+            </>
+          )
+        }
+        
+        
       </div>
-      <ReactModal isOpen={showCreateModal} ariaHideApp={false} >
-        {/*<Modal.Header closeButton>*/}
-        {/*  <Modal.Title>Create a New Project</Modal.Title>*/}
-        {/*</Modal.Header>*/}
-        {/*<Modal.Body>*/}
-
-        {/*</Modal.Body>*/}
-        {/*<Modal.Footer>*/}
-        <input
-          type="text"
-          placeholder="Nhập tên của project"
-          className="w-full p-2 border rounded m-2"
-          id="my-prompt"
-          value={projectNameValue}
-          onChange={event => setProjectNameValue(event.target.value)}
-        />
-
-        {/*<div className="relative w-full">*/}
-        {/*  <select className="w-full p-2 m-2 border rounded appearance-none">*/}
-        {/*    <option>Tiếng Anh</option>*/}
-        {/*    <option>Tiếng Trung</option>*/}
-        {/*    <option>Tiếng Việt</option>*/}
-        {/*    <option>Tiếng Hàn</option>*/}
-        {/*    <option>...</option>*/}
-
-        {/*  </select>*/}
-        {/*  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none"/>*/}
-        {/*</div>*/}
-
-        {/*<label htmlFor="projectFolder">*/}
-        {/*  /!*<Button className="p-3 m-2">*!/*/}
-        {/*    Select Project Folder*/}
-        {/*  /!*</Button>*!/*/}
-        {/*</label>*/}
-        {/*<input id="projectFolder" directory="" webkitdirectory="" type="file" onChange={event => {*/}
-        {/*  let theFiles = event.target.files;*/}
-        {/*  let relativePath = theFiles[0].webkitRelativePath;*/}
-        {/*  let folder = relativePath.split("/");*/}
-        {/*  alert(folder[0]);*/}
-        {/*}}/>*/}
-
-        <div className="w-full h-50 justify-end flex">
-          <Button onClick={handleClose} className="p-3 m-2">
-            Đóng
-          </Button>
-          <Button onClick={async event => {
-            let temp = await initProject();
-            if (temp) onCreateVideo()
-          }} className="p-3 m-2">
-            Tạo
-          </Button>
-        </div>
-        {/*</Modal.Footer>*/}
-      </ReactModal>
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="[&>button.absolute.top-4.right-4]:hidden"
+                        // onInteractOutside={(e) => e.preventDefault()}
+                        onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Tạo dự án mới</DialogTitle>
+          </DialogHeader>
+           <input
+              type="text"
+              placeholder="Nhập tên của project"
+              className="w-full p-2 border rounded m-2"
+              id="my-prompt"
+              value={projectNameValue}
+              onChange={event => setProjectNameValue(event.target.value)}
+            />
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button onClick={handleClose} className="p-3 m-2">
+                Đóng
+              </Button>
+            </DialogClose>
+            <Button onClick={async event => {
+              let temp = await initProject();
+              if (temp) onCreateVideo()
+            }} className="p-3 m-2">
+              Tạo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <ToastContainer autoClose={1000} position="bottom-center"/>
+      <Dialog open={openModalPlayer} onOpenChange={setOpenModalPlayer}>
+          <DialogContent className="[&>button.absolute.top-4.right-4]:hidden"
+                        onInteractOutside={(e) => e.preventDefault()}
+                        onEscapeKeyDown={(e) => e.preventDefault()}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column'
+                        }}>
+            <DialogHeader>
+              <DialogTitle>Xem video{selectedProjectForDeletion[selectedProjectForDeletion.length - 1]}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 w-full py-4">
+              <ReactPlayer url={dashboardVideoModal} height={'100%'} width={'100%'}   controls></ReactPlayer>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild onClick={() => setSelectedProjectForDeletion([])}>
+                  <button className="w-fit px-2 py-1 rounded-lg border-2 border-black bg-white text-black
+                  hover:text-white hover:bg-black transition-colors ease-linear " onClick={() => setDashboardVideoModal("")}>Hủy</button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="[&>button.absolute.top-4.right-4]:hidden"
                         onInteractOutside={(e) => e.preventDefault()}
@@ -898,8 +943,13 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                 <button disabled={isSubmitting} className="w-fit px-2 py-1 rounded-lg border-2 border-black bg-white text-black
                                 hover:text-white hover:bg-black transition-colors ease-linear " onClick={() => setSelectedVideos("")}>Hủy</button>
               </DialogClose>
-              <button disabled={isSubmitting} className="w-fit px-2 py-1 rounded-lg border-2 border-green-600 bg-green-600 text-white
+              {session?
+              (
+                <button disabled={isSubmitting} className="w-fit px-2 py-1 rounded-lg border-2 border-green-600 bg-green-600 text-white
                                 hover:text-green-600 hover:bg-white transition-colors ease-linear " onClick={handleConfirmShare}>Xác nhận</button>
+              )
+              :(<></>)}
+      
             </DialogFooter>
           </DialogContent>
         </Dialog>

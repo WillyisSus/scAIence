@@ -64,7 +64,19 @@ export default function Home() {
   const confirmImageChanges = async () => {
     await goToPage(4)
   }
-
+  const goToProjectFromDashboard = async (projectName:string) => {
+    const response = await fetch('/api/project_init/project_status', {
+      method: 'GET',
+      headers: {
+        'Content-type': 'application/json'
+      }
+    })
+    if (response.ok){
+      const page = await response.json();
+      console.log(page)
+      await goToPage(page.output)
+    }
+  }
   const handleCancel = async () => {
     await goToPage(1)
   }
@@ -74,7 +86,7 @@ export default function Home() {
       {currentInterface === 1 && 
         <Dashboard 
           onCreateVideo={async () => {await handleCreateVideo()}} 
-          onGoToProject={async () => {await confirmImageChanges()}}
+          onGoToProject={async (projectName:string) => goToProjectFromDashboard(projectName)}
         />
       }
 

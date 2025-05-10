@@ -8,7 +8,11 @@ export async function POST(req: { json: () => any; }, res: any)  {
         const appdata = await fsPromises.readFile(`public/appdata.json`);
         const appdatajson = await JSON.parse(appdata);
         const project_name = appdatajson.current_project;
+        const projectindex = await fsPromises.readFile(`public/${project_name}/index.json`)
+        const projectindexjson = await JSON.parse(projectindex.toString())
+        console.log(projectindexjson)
         await fsPromises.writeFile(`public/${project_name}/resources.json`, JSON.stringify(data.resource_array));
+        await fsPromises.writeFile(`public/${project_name}/index.json`, JSON.stringify({...projectindexjson, status: 3}))
         return NextResponse.json({output: "we good"})
     }
     catch (error) {
