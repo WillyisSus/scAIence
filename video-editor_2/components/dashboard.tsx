@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useInsertionEffect, useState } from "react"
-import { Check, Plus, Trash2, SquarePlus, Eye, DiscAlbum } from "lucide-react"
+import { Check, Plus, Trash2, SquarePlus, Eye, DiscAlbum, AwardIcon } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { ToastContainer, toast } from 'react-toastify';
 import ReactModal from 'react-modal';
@@ -16,7 +16,7 @@ import { ChevronRight } from "lucide-react";
 import { PrimeIcons } from 'primereact/api';
 import ReactPlayer from "react-player";
 import YouTubePlayer from "react-player/youtube";
-
+import { AsyncResource } from "async_hooks";
 interface DashboardProps {
   onCreateVideo: () => void
   onGoToProject: () => void
@@ -24,6 +24,8 @@ interface DashboardProps {
 
 export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardProps) {
   const [selectedVideos, setSelectedVideos] = useState<string[]>([])
+  const [open, setOpen] = useState(false)
+  
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [projectNameValue, setProjectNameValue] = useState("temp");
   const [is_data_loaded, setDataLoaded] = useState(false)
@@ -35,6 +37,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState("https://www.youtube.com/watch?v=_PSjoVXFGAQ")
   const [selectedProvider,  setSelectedProvider] = useState("")
   const [selectedPage, setSelectedPage] = useState(null)
+  const [selectedProjectForDeletion, setSelectedProjectForDeletion] = useState([])
   const [latestViewCount, setLatestViewCount] = useState(0)
   const oldViewCount = useRef(0)
   const [latestLikeCount, setLatestLikeCount] = useState(0)
@@ -42,7 +45,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const MENU_ID = "project-context-menu"
   const { show } = useContextMenu({ id: MENU_ID })
   const getProjectNameAndShowMenu = (event) => {
-    console.log(event.currentTarget)
+    console.log(event.currentTarget.id)
     handleShowProjectContextMenu(event, { project_name: event.currentTarget.id })
   }
   const openToYoutubeVideo = (videoID) => {
@@ -51,19 +54,61 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const openToFacebookVideo = (videoID) => {
     window.open(`https://www.facebook.com/watch/?v=${videoID}`, '_blank').focus();
   }
-  const handleShowProjectContextMenu = (event: any, project: {}) => {
+  const handleShowProjectContextMenu = (event: any, project: {project_name:String}) => {
+    console.log("Selected: ", project.project_name)
     show({
       event,
       props: project
     })
+  }
+  const handleConfirm = async () => {
+    if (selectedProjectForDeletion.length == 0) return
+    const response = await fetch('/api/dashboard/delete_project', {
+          method: 'POST', 
+          headers: {
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            chosen_projects: selectedProjectForDeletion
+          })
+        })
+    if (response.ok){
+      toast.success("Đã xóa dự án")
+      const data = await response.json();
+      setProjectList(JSON.parse(data.output))
+    }else{
+      toast.error("Không thể xóa dự án")
+    }
+    setSelectedProjectForDeletion([])
+    setOpen(false)
   }
   const handleProjectContextMenuItemClick = async ({ id, event, props }) => {
     switch (id) {
       case "view_exported_video": {
         break
       }
-      case "delete":
+      case "delete":{
+        setOpen(true)
+        setSelectedProjectForDeletion([props.project_name])
+        // const response = await fetch('/api/dashboard/delete_project', {
+        //   method: 'POST', 
+        //   headers: {
+        //     'Content-type': 'application/json'
+        //   },
+        //   body: JSON.stringify({
+        //     chosen_projects: [props.project_name]
+        //   })
+        // })
+        // if (response.ok){
+        //   toast.success("Đã xóa dự án")
+        //   const data = await response.json();
+        //   setProjectList(JSON.parse(data.output))
+
+        // }else{
+        //   toast.error("Không thể xóa dự án")
+        // }
         break
+      }
       case "go_to_video_editor": {
         console.log(props.project_name)
         await selectProject(props.project_name)
@@ -706,6 +751,26 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
         </div>
         {/*</Modal.Footer>*/}
       </ReactModal>
+      <ToastContainer autoClose={1000} position="bottom-center"/>
+      <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="[&>button.absolute.top-4.right-4]:hidden"
+                        onInteractOutside={(e) => e.preventDefault()}
+                        onEscapeKeyDown={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle>Xóa dự án</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              Khi thực hiện xóa dự án, tất cả tài nguyên được lưu bên trong thư mục dự án sẽ bị xóa, bao gồm cả hình ảnh, audio đã được tạo ra bởi hệ thống, video được xuất bản trong thư mục "exports".
+              Sau khi bấm nút "Xác nhận", hệ thống sẽ thực hiện xóa thư mục dự án này.
+            </div>
+            <DialogFooter>
+              <Button  variant="outline" onClick={handleConfirm}>Xác nhận</Button>
+              <DialogClose asChild onClick={() => setSelectedProjectForDeletion([])}>
+                <Button>Hủy</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   )
 }
