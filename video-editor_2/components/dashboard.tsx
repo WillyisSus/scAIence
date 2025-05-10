@@ -757,14 +757,15 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                         onInteractOutside={(e) => e.preventDefault()}
                         onEscapeKeyDown={(e) => e.preventDefault()}>
             <DialogHeader>
-              <DialogTitle>Xóa dự án</DialogTitle>
+              <DialogTitle>Xóa dự án {selectedProjectForDeletion[selectedProjectForDeletion.length - 1]}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              Khi thực hiện xóa dự án, tất cả tài nguyên được lưu bên trong thư mục dự án sẽ bị xóa, bao gồm cả hình ảnh, audio đã được tạo ra bởi hệ thống, video được xuất bản trong thư mục "exports".
-              Sau khi bấm nút "Xác nhận", hệ thống sẽ thực hiện xóa thư mục dự án này.
+              Khi thực hiện xóa dự án, tất cả tài nguyên được lưu bên trong thư mục dự án ("{"path_to_app/public/" + selectedProjectForDeletion[selectedProjectForDeletion.length - 1]}") sẽ bị xóa, bao gồm cả hình ảnh, audio đã được tạo ra bởi hệ thống, video được xuất bản trong thư mục con "exports".
+              Sau khi bấm nút "Xác nhận", hệ thống sẽ thực hiện xóa thư mục dự án này trên thiết bị.
             </div>
             <DialogFooter>
-              <Button  variant="outline" onClick={handleConfirm}>Xác nhận</Button>
+              <button className="w-fit px-2 py-1 rounded-lg border-2 border-red-600 bg-white text-red-600
+                                hover:text-white hover:bg-red-600 transition-colors ease-linear " onClick={handleConfirm}>Xác nhận</button>
               <DialogClose asChild onClick={() => setSelectedProjectForDeletion([])}>
                 <Button>Hủy</Button>
               </DialogClose>
