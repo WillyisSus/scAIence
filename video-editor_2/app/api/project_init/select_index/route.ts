@@ -25,7 +25,15 @@ export async function GET(req: any, res: any)  {
     try {
         const appdata = await fsPromises.readFile(`public/appdata.json`);
         let appdatajson = await JSON.parse(appdata);
-        return NextResponse.json({output: appdatajson.projects_list})
+        console.log(appdatajson)
+        const results = []
+        for (const project of appdatajson.projects_list){
+            const projectIndex = await fsPromises.readFile(`public/${project}/index.json`)
+            const projectIndexJson = await JSON.parse(projectIndex.toString())
+            console.log(projectIndexJson)
+            results.push(projectIndexJson)
+        }
+        return NextResponse.json({output: results})
     }
     catch (error) {
         return NextResponse.json({output: []})

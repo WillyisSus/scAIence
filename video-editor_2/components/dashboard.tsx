@@ -30,7 +30,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const expotedVideoRef = useRef<HTMLDivElement | null>(null)
   const uploadedVideoRef = useRef<HTMLDivElement | null>(null)
   const statisticBoardRef = useRef<HTMLDivElement | null>(null)
-
+  const statusList = ["", "Đã tạo dự án", "Đã tạo tài nguyên", "Đã duyệt tài nguyên", "Đang chỉnh sửa"]
   const [selectedVideos, setSelectedVideos] = useState("")
   const [open, setOpen] = useState(false)
   const [openShare, setOpenShare] = useState(false)
@@ -56,6 +56,26 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const [selectedPageDropdownText, setSelectedPageDropdownText] = useState("")
   const [dashboardVideoModal, setDashboardVideoModal] = useState("")
   const MENU_ID = "project-context-menu"
+  function formatSmartLocalDateTime(timestamp: number): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+
+    const isSameDay =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
+
+    const pad = (num: number): string => num.toString().padStart(2, '0');
+
+    const timePart = `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+
+    if (isSameDay) {
+      return `Hôm nay ${timePart}`;
+    } else {
+      const datePart = `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+      return `${datePart} ${timePart}`;
+    }
+  }
   const { show } = useContextMenu({ id: MENU_ID })
   const getProjectNameAndShowMenu = (event) => {
     console.log(event.currentTarget.id)
@@ -200,6 +220,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
 
       if (response.ok) {
         const data = await response.json();
+        console.log(data)
         setProjectList(data.output);
         setDataLoaded(true)
       }
@@ -372,8 +393,8 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   // }
 
   const initProject = async () => {
-    if (projectList.includes(projectNameValue)){
-      toast.error("Đã tồn tại dự an tên này");
+    if (projectList.findIndex((el) => el.project_name === projectNameValue) != -1){
+      toast.error("Đã tồn tại dự án tên này");
       return false;
     }
 
@@ -525,14 +546,13 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                   Tên dự án
                 </div>
               </th>
-              <th className="p-4 text-left">Bản xem trước</th>
               <th className="p-4 text-left">Trạng thái</th>
               <th className="p-4 text-left">Ngày tạo</th>
             </tr>
           </thead>
           <tbody>
             {projectList.map((project) => (
-              <tr key={project} id={project} className="border-b" onContextMenu={getProjectNameAndShowMenu}>
+              <tr key={project.date_created} id={project.project_name} className="border-b" onContextMenu={getProjectNameAndShowMenu}>
                 <td className="p-4">
                   <div className="flex items-center gap-2">
                     {/*<div*/}
@@ -540,18 +560,18 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                     {/*  onClick={() => {}}*/}
                     {/*>*/}
                     {/*</div>*/}
-                    {project}
+                    {project.project_name}
                   </div>
                 </td>
-                <td className="p-4" >
+                {/* <td className="p-4" >
                   <img
                     src={"/placeholder.svg"}
                     alt={project}
                     className="w-24 h-12 object-cover rounded"
                   />
-                </td>
-                <td className="p-4">{"Lol"}</td>
-                <td className="p-4">{"Lol"}</td>
+                </td> */}
+                <td className="p-4">{statusList[project.status]}</td>
+                <td className="p-4">{formatSmartLocalDateTime(project.date_created)}</td>
               </tr>
             ))}
 
@@ -653,11 +673,14 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                         <td>
                           <table className="w-full">
                             <thead className="border-b">
-                            <th className="p-4 text-center">
-                               Video được đăng tải
-                            </th>
-                            <th className="p-4 text-center">Tiêu đề đăng tải</th>
-                            <th className="p-4 text-center">Hiệu suất video</th>
+                            <tr>
+                                <th className="p-4 text-center">
+                                  Video được đăng tải
+                                </th>
+                                <th className="p-4 text-center">Tiêu đề đăng tải</th>
+                                <th className="p-4 text-center">Hiệu suất video</th>
+                            </tr>
+                      
                             </thead>
                             <tbody>
                             {page.video.map((uploadedVideo) => (
@@ -729,11 +752,14 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                         <td>
                           <table className="w-full">
                             <thead>
-                            <th className="p-4 text-left">
-                               Video được đăng tải
-                            </th>
-                            <th className="p-4 text-left">Tiêu đề đăng tải</th>
-                            <th className="p-4 text-left">Hiệu suất video</th>
+                            <tr>
+                                <th className="p-4 text-left">
+                                  Video được đăng tải
+                                </th>
+                                <th className="p-4 text-left">Tiêu đề đăng tải</th>
+                                <th className="p-4 text-left">Hiệu suất video</th>
+                            </tr>
+                          
                             </thead>
                             <tbody>
                             {page.video.map((uploadedVideo) => (
