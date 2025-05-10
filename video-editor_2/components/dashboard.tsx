@@ -10,6 +10,8 @@ import { eventNames } from "process";
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogClose, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog"
+
+         
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { ChevronRight } from "lucide-react";
@@ -23,9 +25,10 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardProps) {
-  const [selectedVideos, setSelectedVideos] = useState<string[]>([])
+  const [selectedVideos, setSelectedVideos] = useState("")
   const [open, setOpen] = useState(false)
-  
+  const [openShare, setOpenShare] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [projectNameValue, setProjectNameValue] = useState("temp");
   const [is_data_loaded, setDataLoaded] = useState(false)
@@ -42,6 +45,8 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const oldViewCount = useRef(0)
   const [latestLikeCount, setLatestLikeCount] = useState(0)
   const oldLikeCount = useRef(0)
+  const [formData, setFormData] = useState({ title: "", description: "" })
+  const [selectedPageDropdownText, setSelectedPageDropdownText] = useState("")
   const MENU_ID = "project-context-menu"
   const { show } = useContextMenu({ id: MENU_ID })
   const getProjectNameAndShowMenu = (event) => {
@@ -60,6 +65,52 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
       event,
       props: project
     })
+  }
+
+  const showShareDialog = (video:string) => {
+    setSelectedVideos(video)
+    setOpenShare(true)
+  }
+  const handleConfirmShare = async () => {
+    if (!formData.title.trim() || !formData.description.trim()) {
+      toast.warn("Vui lòng nhập tiêu đề và mô tả.")
+      return
+    }
+    setIsSubmitting(true)
+    try {
+      if (selectedProvider === "facebook") {
+        const response = await axios.post('/api/auth/upload_facebook', {
+          pageId: selectedPage.id,
+          pageAccessToken: selectedPage.access_token,
+          pageName: selectedPage.name, 
+          title: formData.title,
+          description: formData.description,
+        });
+        const data = response.data;
+        console.log(data);
+        toast.success("Đăng lên Facebook thành công!")
+        setOpenShare(false)
+      } else if (selectedProvider === "google") {
+        const response = await axios.post('/api/auth/upload_youtube', {
+          channelId: session.googleUserId,
+          accessToken: session.googleAccessToken,
+          channel: session.user.name,
+          title: formData.title,
+          description: formData.description
+        });
+        const data = response.data;
+        console.log(data);
+        toast.success("Đăng lên Youtube thành công!")
+        setOpenShare(false)
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.error || 'Upload failed';
+      console.error("Lỗi khi upload:", errMsg);
+      toast.error("Đăng lên thất bại.")
+    }
+    setFormData({ title: "", description: "" })
+    setIsSubmitting(false)
+    setSelectedProvider("")
   }
   const handleConfirm = async () => {
     if (selectedProjectForDeletion.length == 0) return
@@ -246,6 +297,17 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
       oldViewCount.current = latestViewCount
       setLatestViewCount(data.viewCount)
     }
+  }
+
+  const facebookShareItemCLick = (page:{}) => {
+    if (!page) return
+    setSelectedPage(page)
+    setSelectedPageDropdownText(page?.name)
+    setSelectedProvider("facebook")
+  }
+  const youtubeShareItemClick = (page) =>{
+    setSelectedProvider("google")
+    setSelectedPageDropdownText(page)
   }
   // const videos = [
   //   {
@@ -492,7 +554,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                       text-black bg-white border-black border
                       hover:text-white hover:bg-black
                       transition-colors ease-linear
-                      "> Đăng tải <i className="pi pi-share-alt"></i> </button>
+                      " onClick={() => showShareDialog(exportedFile)}> Đăng tải <i className="pi pi-share-alt"></i> </button>
                     </td>
                   </tr>
                  ))}
@@ -618,12 +680,12 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                     </thead>
                     <tbody>
                     {uploadedDataYoutube.map((page) => (
-                      <tr key={page.pageID} id={page.pageID} className="border-b">
+                      <tr key={page.pageID} id={page.pageID} className="border-b w-full">
                         <td className="p-4">
                           {page.pageName}
                         </td>
                         <td>
-                          <table>
+                          <table className="w-full">
                             <thead>
                             <th className="p-4 text-left">
                                Video được đăng tải
@@ -769,6 +831,75 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
               <DialogClose asChild onClick={() => setSelectedProjectForDeletion([])}>
                 <Button>Hủy</Button>
               </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      <Dialog open={openShare} onOpenChange={setOpenShare}>
+          <DialogContent className="[&>button.absolute.top-4.right-4]:hidden"
+                        onInteractOutside={(e) => e.preventDefault()}
+                        onEscapeKeyDown={(e) => e.preventDefault()}>
+            <DialogHeader>
+              {!session ? 
+              (
+              <DialogTitle>Xin hãy đăng nhập để chia sẻ lên mạng xã hội</DialogTitle>
+              ): (
+                <DialogTitle>Chia sẻ dự án lên {session.facebookAccessToken? "Facebook" : "Youtube"}</DialogTitle>
+              )}
+            </DialogHeader>
+            {session? (
+              <div className="space-y-4 py-4">
+                <h3 className="font-bold">Trang đăng tải</h3>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      {selectedPageDropdownText.length === 0 ? "Chọn trang đăng tải": selectedPageDropdownText} <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-4">
+                    {
+                    session.facebookAccessToken ? 
+                    (
+                      <>
+                        {session.pages?.map((page: any) => (
+                          <DropdownMenuItem key={page.id} onClick={() => facebookShareItemCLick(page)}>
+                            {page.name}
+                          </DropdownMenuItem>
+                        ))}
+                                            </>
+                    ): 
+                    ( <>
+                        <DropdownMenuItem onClick={() => youtubeShareItemClick(session.user.name)}>
+                          {session.user.name}
+                        </DropdownMenuItem>
+                      </>)
+                    }
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <h3 className="font-bold">Thông tin đăng tải</h3>
+                <div className="space-y-4">
+                    {/* {dialogError && <p className="text-sm text-red-500">{dialogError}</p>} */}
+                    <Input
+                        placeholder="Tiêu đề"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    />
+                    <Input
+                        placeholder="Mô tả"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    />
+                  </div>
+              </div>
+            ) : 
+            (<></>)
+            }
+            <DialogFooter>
+              <DialogClose asChild>
+                <button disabled={isSubmitting} className="w-fit px-2 py-1 rounded-lg border-2 border-black bg-white text-black
+                                hover:text-white hover:bg-black transition-colors ease-linear " onClick={() => setSelectedVideos("")}>Hủy</button>
+              </DialogClose>
+              <button disabled={isSubmitting} className="w-fit px-2 py-1 rounded-lg border-2 border-green-600 bg-green-600 text-white
+                                hover:text-green-600 hover:bg-white transition-colors ease-linear " onClick={handleConfirmShare}>Xác nhận</button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
