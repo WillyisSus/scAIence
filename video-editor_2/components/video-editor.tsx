@@ -70,15 +70,15 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const maxImageID = useRef(0);
   const maxAudioID = useRef(0);
   const {show} = useContextMenu()
-  const lastFrameTime = useRef(0);
+  // const lastFrameTime = useRef(0);
 
-  const frameRef = useRef();
-  const [previewPlay, setPreviewPlay] = useState(false);
-  const [currentTime, setCurrentTime] = useState("00:00")
-  const [numericCurrentTime, setNumericCurrentTime] = useState(0);
-  const [numericTotalTime, setNumericTotalTime] = useState(1000);
-  const [totalTime, setTotalTime] = useState("12:03")
-  const [draggingItem, setDraggingItem] = useState<any>(null)
+  // const frameRef = useRef();
+  // const [previewPlay, setPreviewPlay] = useState(false);
+  // const [currentTime, setCurrentTime] = useState("00:00")
+  // const [numericCurrentTime, setNumericCurrentTime] = useState(0);
+  // const [numericTotalTime, setNumericTotalTime] = useState(1000);
+  // const [totalTime, setTotalTime] = useState("12:03")
+  // const [draggingItem, setDraggingItem] = useState<any>(null)
   const [contextMenuPosition, setContextMenuPosition] = useState({x: 0, y: 0})
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [selectedItem, setSelectedItem] = useState<{ trackId: number | null; itemId: string | null }>({
@@ -96,16 +96,61 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   })
   const [topBarProgress, setTopBarProgress] = useState("")
   const [shareDropdown, setShareDropdown] = useState(true)
+  const transitions = [
+  "fade",
+  "fadeblack",
+  "fadewhite",
+  "distance",
+  "wipeleft",
+  "wiperight",
+  "wipeup",
+  "wipedown",
+  "slideleft",
+  "slideright",
+  "slideup",
+  "slidedown",
+  "smoothleft",
+  "smoothright",
+  "smoothup",
+  "smoothdown"
+  ];
 
   const [is_data_loaded, setDataLoaded] = useState(false)
   const [resources, setResources] = useState([])
   const [imageTrackResources, setImageTrackResources] = useState([]);
   const [subtitleTrackResources, setSubtitleTrackResources] = useState([]);
   const [voiceTrackResources, setVoiceTrackResources] = useState([]);
-  const [display_item, setDisplayItem] = useState(null)
-
+  const [display_item, setDisplayItem] = useState<{
+    id: string
+    name: string
+    source:string
+    original_duration: number
+    duration: number
+    trim_start: number
+    trim_end: number
+    width: number
+    type: string
+    xfadeTransition: string
+  } | null>(null)
+  const setItemXFadeTransition = (item: TimelineItem, transition) => {
+    item.xfadeTransition = transition;
+    if(item.id.indexOf(trackName.third_track) != -1){
+      const replaceIndex = imageTrackResources.findIndex((element) => item.id === element.id)
+      setImageTrackResources((imageTrackResources)=>{
+        imageTrackResources[replaceIndex] = {...item}
+        return [...imageTrackResources]
+      })
+    } else if (item.id.indexOf(trackName.fourth_track) != -1) {
+      const replaceIndex = voiceTrackResources.findIndex((element) => item.id === element.id)
+      setVoiceTrackResources((voiceTrackResources)=>{
+        voiceTrackResources[replaceIndex] = {...item}
+        return [...voiceTrackResources]
+      })
+    }
+    setDisplayItem({...item})
+  }
   const [outputQuality, setOutputQuality] = useState(1);
-
+  
   // Reference to track containers for position calculations
   const trackRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
 
@@ -220,6 +265,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       item.trim_end = item.trim_start + (item.width)/pxPerSecond
     }
     item.duration = item.trim_end - item.trim_start
+    if (display_item.id === item.id) loadDataContent({...item})
     if (item.id.indexOf(trackName.first_track) != -1){
         const replaceIndex = subtitleTrackResources.findIndex((element) => item.id === element.id)
         setSubtitleTrackResources((subtitleTrackResources)=>{
@@ -383,7 +429,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   function handleContextMenu(event, menuType, item){
     let menuID = ""
     switch(menuType){
-      case "delete":
+      case "track-item":
           menuID = MENU_ID
           break
       case "add":
@@ -433,6 +479,10 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         }
         toast.success("Đã xóa tài nguyên")
         break;
+      }
+      case 'load-resource':{
+        loadDataContent(props.key)
+        break
       }
       case "add":{
         const newItem = props.key
@@ -801,7 +851,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     <div className="max-w-full max-h-full">
       <div>
         <Menu id={MENU_ID}>
-          <Item id="delete" onClick={handleItemClick}>Xóa tài nguyên</Item>
+          <Item id="load-resource" onClick={handleItemClick}>Xem giá trị</Item>
+          <Item id="delete" onClick={handleItemClick}>Xóa</Item>
         </Menu>
         <Menu id={MENU_ID_2}>
           <Item id="add" onClick={handleItemClick}>Thêm vào Timeline</Item>
@@ -962,7 +1013,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 className="flex flex-col items-center cursor-move"
                 onContextMenu={handleShowAddMenu}
               >
-                <div className="bg-gray-200 w-full aspect-video rounded mb-1 flex items-center justify-center text-xs" onClick={() => {loadDataContent(resource)}}>
+                <div className="bg-gray-200 w-full aspect-video rounded mb-1 flex items-center justify-center text-xs" 
+                // onClick={() => {loadDataContent(resource)}}
+                >
                   {resource.type === "audio" ? (
                     <Volume className="h-4 w-4" />
                   ) : resource.type === "subtitle" ? (
@@ -980,9 +1033,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         {/* Video player */}
         <div className="border-r p-4">
           <h2 className="font-medium text-lg mb-4">Trình phát</h2>
-
-
-          <div className="flex flex-col h-full]">
+          <div className="flex flex-col items-center justify-center h-full]">
             <ReactPlayer url={outputURL} width="100%" controls={true}/>
             {/* <canvas className="bg-gray-500 w-full"/>
             <div className="flex justify-between items-center">
@@ -1023,12 +1074,49 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 <li>• Click chuột phải vào tài nguyên để xóa</li>
               </ul>
             </div>) :
-              display_item.type == "subtitle" ? (<textarea className="w-full h-full max-h-80" defaultValue={display_item.source}></textarea>) :
-              display_item.type == "audio" ? (<AudioPlayer src={display_item.source} onPlay={(e) => {
-                    e.preventDefault();
-                    console.log("onPlay")
-                  }}></AudioPlayer>) :
-              display_item.type == "image" ? (<img src={display_item.source} alt={"Image"} className="w-40"/>) : (<br/>)
+              display_item.type == "subtitle" ? (
+              <div className="w-full h-full">
+                <textarea className="w-full h-full max-h-80" defaultValue={display_item.source}></textarea>
+              </div>
+            ) :
+              display_item.type == "audio" ? (
+              <div className="h-full w-full flex flex-col gap-2">
+                <div><span className="font-bold">Bắt đầu tại: </span>{display_item.trim_start} s</div>
+                <div><span className="font-bold">Kết thúc tại: </span>{display_item.trim_end} s</div>
+                <AudioPlayer className="w-full" src={display_item.source} onPlay={(e) => {
+                                    e.preventDefault();
+                                    console.log("onPlay")
+                                  }}></AudioPlayer>
+              </div>
+              ) :
+              <div className="h-full w-full flex flex-col gap-2">
+                <img src={display_item.source} alt={"Image"} className="w-52 max-w-56 self-center border border-black rounded-lg p-1 "/>
+                <div><span className="font-bold">Xuất hiện: </span>{display_item.duration} s</div>
+                <div className="w-full flex flex-col gap-1"><span className="font-bold">Hiệu ứng chuyển cảnh: </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="w-48 text-truncate text-left justify-between items-center flex flex-row rounded-lg border border-black cursor-pointer bg-white h-fit py-1 px-2">
+                        {display_item.xfadeTransition.length === 0 ? "Không có" : display_item.xfadeTransition} <i className="pi pi-chevron-right"></i>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent style={{
+                      height: '200px',
+                      width: '200px',
+                      overflow: 'hidden',
+                      overflowY: 'scroll'
+                    }
+                    }>
+                      {transitions.map((transition) => (
+                        <DropdownMenuItem style={{
+                          cursor: 'pointer'
+                        }} key={transition}
+                        onClick={() => setItemXFadeTransition(display_item, transition)}
+                        >{transition}</DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
           }
         </div>
       </div>
@@ -1095,25 +1183,29 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
             onDragOver={handleDragOver}>
-            <TrackRow
+            {/* <TrackRow
+                handleOnClickTrackItem={loadDataContent}
                 handleDeleteContextMenu={handleContextMenu}
                 id={trackName.first_track}
                 tasks={subtitleTrackResources}
                 onResizeItem={handleTrackItemResize}>
-              </TrackRow>
-            <TrackRow
+              </TrackRow> */}
+            {/* <TrackRow
+                handleOnClickTrackItem={loadDataContent}
                 handleDeleteContextMenu={handleContextMenu}
                 id={trackName.second_track}
                 tasks={[]}
                 onResizeItem={handleTrackItemResize}>
-              </TrackRow>
+              </TrackRow> */}
             <TrackRow
+                handleOnClickTrackItem={loadDataContent}
                 handleDeleteContextMenu={handleContextMenu}
                 id={trackName.third_track}
                 tasks={imageTrackResources}
                 onResizeItem={handleTrackItemResize}>
               </TrackRow>
             <TrackRow
+                handleOnClickTrackItem={loadDataContent}
                 handleDeleteContextMenu={handleContextMenu}
                 id={trackName.fourth_track}
                 tasks={voiceTrackResources}

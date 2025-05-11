@@ -1,18 +1,23 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {Resizable} from "re-resizable"
+import { useState } from "react";
 
-export const TrackRowItem = ({ id, item, onResizeStop, handleDeleteContextMenu}) => {
-  const { attributes, listeners, setNodeRef, transform, transition} =
-    useSortable({ id });
+export const TrackRowItem = ({ id, item, onResizeStop, handleDeleteContextMenu, handleOnClickTrackItem}) => {
+  const [dragEnable, setDragEnable] = useState(false)
+  const { attributes, listeners, setNodeRef, transform, transition, isOver} =
+    useSortable({ id, disabled: dragEnable });
   const handleOnResizeStart = (e, dir, ref, d) => {
     console.log("Resize Start:");
   }
   function myHandle(event){
-    handleDeleteContextMenu(event, "delete", {...item})
+    handleDeleteContextMenu(event, "track-item", {...item})
   }
   const handleOnResizeStop = (e, dir, ref, d) => {
     onResizeStop({...item}, dir, d.width)
+  }
+  const handleOnClick = () => {
+    handleOnClickTrackItem(item)
   }
   const style = {
     transition,
@@ -89,9 +94,18 @@ export const TrackRowItem = ({ id, item, onResizeStop, handleDeleteContextMenu})
       >
         <div {...attributes}
         {...listeners}
+        onDrag={() => setDragEnable(true)}
+        onDragEnd={()=>setDragEnable(false)}
         onContextMenu={myHandle} 
-        className="truncate px-2 w-[90%] h-full text-center content-center cursor-move">
-        {item.name}
+        className="truncate px-2 w-[90%] h-full text-center content-center  ">
+        {item.type === "image" ? (
+          <div className="w-full h-full bg-contain bg-center bg-repeat-x" style={{
+            backgroundImage: `url(${item.source})`
+          }}></div>
+        ): (
+            <span className="user-select-none">{item.name}</span>
+        )
+        }
         </div>
       </Resizable>
     </div>
