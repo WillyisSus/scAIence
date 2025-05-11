@@ -22,7 +22,7 @@ import {   DndContext,
   useDraggable} from "@dnd-kit/core"
 import { arrayMove } from "@dnd-kit/sortable"
 import { TrackRow } from "./ui/track-row"
-import { resourceUsage } from "process"
+import { resourceUsage, send } from "process"
 import { toast, ToastContainer } from "react-toastify"
 import { Menu, Item, Separator, Submenu, useContextMenu } from 'react-contexify';
 import 'react-contexify/ReactContexify.css';
@@ -97,7 +97,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   })
   const [exportInformation, setExportInformation] = useState<string|null> (null)
   const [exportModal, setShowExportModal] = useState(false);
-
+  const [userResourceFile, setUserResourceFile] = useState({})
+  const [showUserResourceModal, setShowUserResourceModal] = useState(false)
   const [topBarProgress, setTopBarProgress] = useState("")
   const [shareDropdown, setShareDropdown] = useState(true)
   const transitions = [
@@ -124,6 +125,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const [imageTrackResources, setImageTrackResources] = useState([]);
   const [subtitleTrackResources, setSubtitleTrackResources] = useState([]);
   const [voiceTrackResources, setVoiceTrackResources] = useState([]);
+  const [uploadedItem, setUploadedItem] = useState<Blob | null>(null)
   const [display_item, setDisplayItem] = useState<{
     id: string
     name: string
@@ -686,7 +688,102 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       document.removeEventListener("click", handleClickOutside)
     }
   }, [showContextMenu])
+  const handleConfirmAddResource = async () => {
+    if (!uploadedItem) return;
+    const formData = new FormData();
+    formData.append('file', uploadedItem);
+    if(uploadedItem.type.startsWith("image")){
+        const new_image_response = await fetch('/api/video_editor/add_resource/image', {
+            method: 'POST',
+            body: formData,
+        });
 
+        if (new_image_response.ok) {
+            const result = await new_image_response.json();
+            const custom_url = result.image_path;
+            
+            // Update resources
+            const newResourceItem = {
+              id: Date.now(),
+              name: "image_" + Date.now(),
+              source: custom_url,
+              original_duration: 3,
+              type: "image"
+            }
+            const sendData = [...resources]
+            sendData.push(newResourceItem)
+            const imageResourceResponse = await fetch('/api/project_init/save_resources', {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    resource_array: sendData
+                })
+            })
+          if (imageResourceResponse.ok){
+            toast.success("Đã thêm tài nguyên ảnh")
+            setResources((resources) => {
+              resources.push(newResourceItem)
+              return [...resources]
+            })
+          }else{
+            toast.success("Không thể thêm tài nguyên")
+          }
+      
+        }else{
+            toast.error("Không thể thêm tài nguyên")
+            return
+        }
+    }else if (uploadedItem.type.startsWith("audio")){
+        
+        const new_audio_response = await fetch('/api/video_editor/add_resource/audio', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (new_audio_response.ok) {
+            const result = await new_audio_response.json();
+            const custom_url = result.audio_path;
+            const duration = result.duration
+            // Update resources
+            const newResourceItem = {
+              id: Date.now(),
+              name: "audio_" + Date.now(),
+              source: custom_url,
+              original_duration: duration,
+              type: "audio"
+            }
+            const sendData = [...resources]
+            sendData.push(newResourceItem)
+            const imageResourceResponse = await fetch('/api/project_init/save_resources', {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    resource_array: sendData
+                })
+            })
+          if (imageResourceResponse.ok){
+            toast.success("Đã thêm tài nguyên âm thanh")
+            setResources((resources) => {
+              resources.push(newResourceItem)
+              return [...resources]
+            })
+          }else{
+            toast.success("Không thể thêm tài nguyên")
+          }
+      
+        }else{
+            toast.error("Không thể thêm tài nguyên")
+            return
+        }
+    }
+    setUploadedItem(null);
+    setShowUserResourceModal(false);
+        //Upload image
+  }
   const loadDataContent = (resource_item) => {
     setDisplayItem(resource_item)
   }
@@ -697,7 +794,6 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     if (!exportInformation || exportInformation.trim().length === 0) toast.error("Xin hãy điền tên video")
     if (exportInformation || exportInformation.trim() === "output_video") toast.error("Vui lòng không đặt tên là output_video")
     await onExportVideo().then()
-    setShowExportModal(false)
   }
   const onExportVideo = async () => {
     await saveProjectProperties().then()
@@ -749,6 +845,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         console.log(returnPackage.output);
         setOutputURL(returnPackage.output);
         toast.success("Xuất bản thành công")
+        setShowExportModal(false)
       }
       setTopBarProgress("")
       setShareDropdown(true)
@@ -1045,9 +1142,11 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         <div className="border-r p-4 ">
           <div className="flex justify-between items-center mb-4 max-h-80">
             <h2 className="font-medium text-lg">Tài nguyên</h2>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <span className="text-xl">+</span>
-            </Button>
+            <button className="w-fit rounded-lg py-1 px-2 text-black bg-white border border-white hover:border-black transition-all"
+            onClick={()=>{
+              setUploadedItem(null)
+              setShowUserResourceModal(true)}}
+            ><i className="pi pi-file-plus"></i></button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 max-h-80 overflow-y-scroll">
@@ -1119,9 +1218,10 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             (<div className="p-4 border rounded-md bg-gray-50 mt-4">
               <p className="text-sm font-medium">Hướng dẫn sử dụng</p>
               <ul className="text-xs text-gray-500 mt-2 space-y-1">
-                <li>• Kéo tài nguyên vào timeline để thêm</li>
-                <li>• Kéo tài nguyên trên timeline để di chuyển</li>
-                <li>• Click chuột phải vào tài nguyên để xóa</li>
+                <li>• Chuột phải lên tài nguyên để hiện menu</li>
+                <li>• Chuột phải vào tài nguyên trên timeline để xem menu</li>
+                <li>• Bấm giữ ở giữa và kéo tài nguyên trên timeline để di chuyển trên timeline</li>
+                <li>• Bấm giữ ở hai cạnh và kéo để thay đổi giá trị tài nguyên trên timeline </li>
               </ul>
             </div>) :
               display_item.type == "subtitle" ? (
@@ -1176,7 +1276,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       {/* Timeline */}
       <div className="flex flex-row">
         {/* Timeline toolbar and left panel*/}
-        <div id="toolbar-leftpanel" className="flex flex-col min-w-96">
+        <div id="toolbar-leftpanel" className="flex flex-col min-w-48">
           <div className="flex justify-center h-8 items-center border-r bg-white border-b p-2 gap-4 font-bold">
             Thời gian <i className="pi pi-images"></i>
           </div>
@@ -1190,12 +1290,10 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
 
         {/* Timeline tracks */}
-        <div className="flex-1 min-w-[800px] max-w-full bg-gray-50 overflow-x-scroll relative">
+        <div className="flex-1 min-w-96 max-w-full bg-gray-50 overflow-x-scroll relative">
 
           {/* Timeline ruler */}
-          <div className="flex border-b max-w-full">
-
-            {/* <div className="w-60 border-r flex-shrink-0"></div> */}
+          {/* <div className="w-60 border-r flex-shrink-0"></div> */}
             <div className="flex min-w-[800px]">
               {Array.from({ length: totalAudioDuration }).map((_, i) => (
                 <div key={i} className="w-[16px] h-8 min-w-[16px] small flex items-center justify-center border-r border-b text-sm py-2">
@@ -1203,7 +1301,6 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                 </div>
               ))}
             </div>
-          </div>
           <DndContext
             collisionDetection={closestCorners}
             onDragStart={handleDragStart}
@@ -1243,7 +1340,40 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
 
         </div>
       </div>
-
+      <Dialog open={showUserResourceModal} onOpenChange={setShowUserResourceModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Thêm tài nguyên vào dự án
+            </DialogTitle>
+          </DialogHeader>
+          <input className="self-start" type="file" onChange={(e) => {
+            if (e.target.files && e.target.files[0])
+              setUploadedItem(e.target.files[0])
+          }} accept=".mp3,.png" />
+          <div className="w-full h-80 flex justify-between flex-col gap-2">
+            {uploadedItem && (
+                uploadedItem.type.startsWith("image")? (
+                <div className="my-auto flex justify-center items-center h-1/2">
+                    <img src={URL.createObjectURL(uploadedItem)} className="h-64 w-64 object-contain border border-black rounded-xl" />
+                </div> ) : (
+                  <AudioPlayer src={URL.createObjectURL(uploadedItem)} className="w-96"></AudioPlayer>
+                )
+            )}
+     
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+               <button className="w-fit px-2 py-1 rounded-lg text-black bg-white border border-black hover:text-white hover:bg-black
+              transition-colors ease-linear cursor-pointer">Hủy</button>
+            </DialogClose>
+            <button className="w-fit px-2 py-1 rounded-lg text-white bg-black border border-black hover:text-black hover:bg-white
+              transition-colors ease-linear cursor-pointer"
+              onClick={handleConfirmAddResource}
+              >Xác nhận</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Context Menu */}
       {showContextMenu && (
         <div
