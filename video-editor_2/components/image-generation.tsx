@@ -28,10 +28,11 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
     const [is_data_loaded, setDataLoaded] = useState(false)
     const [progress, setProgress] = useState("")
 
-    // Support upload/record audio
     const [showAudioModal, setShowAudioModal] = useState(false)
     const [showImageModal, setShowImageModal] = useState(false)
     const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null);
+    const [assetsUpdateStatus, setAssetsUpdateStatus] = useState(0)
+    const [toastMessage, setToastMessage] = useState("")
 
     useEffect(() => {
         const onLoadAssets = async () => {
@@ -55,6 +56,24 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
 
         return
     }, [])
+
+    useEffect(() => {
+        let timeout
+        if (assetsUpdateStatus === 1) {
+            timeout = setTimeout(() => {
+                toast.success(toastMessage);
+                setAssetsUpdateStatus(0);
+            }, 1000)
+        }
+        else if (assetsUpdateStatus === -1) {
+            toast.error("Có gì đó sai sai.");
+            setAssetsUpdateStatus(0)
+        }
+
+        return () => clearTimeout(timeout);
+
+    }, [assetsUpdateStatus])
+
     // Save to project's resources.json, 
     // configuring the original resources properties 
     // (including length for audios and video)
@@ -130,7 +149,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
 
     const updateImage = async (id: number) => {
         if (assets[id-1].script.length === 0) {
-            toast.error("Script can not be empty");
+            toast.error("Kịch bản không được để trống.");
             return;
         }
 
@@ -149,16 +168,20 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
             })
         })
 
-        if (!response.ok) toast.error("Something wrong happened");
-        else toast.success("Image updated successfully");
-
+        if (response.ok) {
+            setToastMessage("Cập nhật hình ảnh thành công.")
+            setAssets(assets)
+            setAssetsUpdateStatus(1)
+        } else
+            setAssetsUpdateStatus(-1)
+            
         enableButtons(id);
     }
 
     const updateSounds = async (id: number) => {
         
         if (assets[id-1].script.length === 0) {
-            toast.error("Script can not be empty")
+            toast.error("Kịch bản không được để trống.")
             return;
         }
 
@@ -177,8 +200,12 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
             })
         })
 
-        if (!response.ok) toast.error("Something wrong happened");
-        else toast.success("Audio updated successfully");
+        if (response.ok) {
+            setToastMessage("Cập nhật âm thanh thành công.")
+            setAssets(assets)
+            setAssetsUpdateStatus(1)
+        } else
+            setAssetsUpdateStatus(-1)
 
         enableButtons(id);
     }
@@ -196,15 +223,15 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
             })
         });
 
-        if (!response.ok) 
-            toast.error("Something wrong happened");
-        else {
-            toast.success("Custom assets deleted successfully");
+        if (response.ok) {
             const newAssets = [...assets];
             newAssets[id-1].custom_image_url = "";
             newAssets[id-1].custom_audio_url = "";
+            setToastMessage("Xóa tài nguyên thành công.")
             setAssets(newAssets);
-        }
+            setAssetsUpdateStatus(1);
+        } else
+            setAssetsUpdateStatus(-1)
 
         enableButtons(id);
     }
@@ -331,6 +358,8 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                     showAudioModal={showAudioModal}
                     setShowAudioModal={setShowAudioModal}
                     selectedAssetId={selectedAssetId}
+                    setAssetsUpdateStatus={setAssetsUpdateStatus}
+                    setToastMessage={setToastMessage}
                     setAssets={setAssets}
                     assets={assets}
                 />
@@ -339,6 +368,8 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                     showImageModal={showImageModal}
                     setShowImageModal={setShowImageModal}
                     selectedAssetId={selectedAssetId}
+                    setAssetsUpdateStatus={setAssetsUpdateStatus}
+                    setToastMessage={setToastMessage}
                     setAssets={setAssets}
                     assets={assets}
                 />

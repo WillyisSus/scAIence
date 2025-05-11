@@ -14,11 +14,13 @@ interface AudioReplaceModalProps {
     showAudioModal: boolean
     setShowAudioModal: (showAudioModal: boolean) => void
     selectedAssetId: number | null
+    setAssetsUpdateStatus: (status: number) => void
+    setToastMessage: (message: string) => void
     setAssets: (assets: ImageItem[]) => void
     assets: ImageItem[]
 }
 
-export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, selectedAssetId, setAssets, assets }: AudioReplaceModalProps) {
+export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, selectedAssetId, setAssetsUpdateStatus, setToastMessage, setAssets, assets }: AudioReplaceModalProps) {
     const [mode, setMode] = useState<'upload' | 'record'>('upload')
     const [tempAudioBlob, setTempAudioBlob] = useState<Blob | null>(null)
 
@@ -35,7 +37,10 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
             body: formData,
         });
 
-        if (!new_audio_response.ok) return;
+        if (!new_audio_response.ok)  {
+            setAssetsUpdateStatus(-1)
+            return;
+        }
 
         const result = await new_audio_response.json();
         const custom_url = result.audio_path;
@@ -57,7 +62,9 @@ export default function AudioReplaceModal({ showAudioModal, setShowAudioModal, s
             })
         })
 
+        setToastMessage("Thay đổi âm thanh thành công.")
         setAssets(updatedAssets)
+        setAssetsUpdateStatus(1)
         setShowAudioModal(false)
         setTempAudioBlob(null)
     }
