@@ -1,6 +1,6 @@
 import {GoogleGenAI} from "@google/genai"
 import {NextResponse} from "next/server";
-import dotenv from 'dotenv';
+import {translate} from 'google-translate-api-x';
 
 export async function POST(req: { json: () => any; }, res: any) {
     // console.log(process.cwd())
@@ -12,16 +12,21 @@ export async function POST(req: { json: () => any; }, res: any) {
         const vibe = data.vibe;
         const audience = data.audience;
 
+        const translation = await translate(prompt, { to: 'en'});
+        const originalLanguage = translation.from.language.iso;
+
         const response = await ai.models.generateContent({
             model: "gemini-2.0-flash",
-            contents: prompt,
+            contents: translation.text,
             config: {
                 systemInstruction: "The answers are split into paragraphs only. Each sentence in those paragraphs should not be longer than 30 words. Do not use bullets or numbering when answer. The answer will have a vibe of " + vibe + " , and the listening audience will lean heavily towards " + audience,
                 tools: [{googleSearch:{}}],
             }
         });
 
-        const result = response.text
+        const reTranslation = await translate(response.text, { to: originalLanguage })
+
+        const result = reTranslation.text
 
         return NextResponse.json({output: result})
     }

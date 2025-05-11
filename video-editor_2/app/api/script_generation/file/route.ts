@@ -28,7 +28,7 @@ export async function POST(req: { json: () => any; }, res: any) {
                 }
             ],
             config: {
-                systemInstruction: "The answers are split into paragraphs only. Each sentence in those paragraphs should not be longer than 30 words. Do not use bullets or numbering when answer. The answer will have a vibe of " + vibe + " , and the listening audience will lean heavily towards " + audience,
+                systemInstruction: "The answers are split into paragraphs only. The result must be written in the source's language. Each sentence in those paragraphs should not be longer than 30 words. Do not use bullets or numbering when answer. The answer will have a vibe of " + vibe + " , and the listening audience will lean heavily towards " + audience,
                 tools: [{googleSearch:{}}],
             }
         });

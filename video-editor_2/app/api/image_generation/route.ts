@@ -2,6 +2,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import * as fs from "node:fs";
 import { NextResponse } from "next/server";
 import fsPromises from "fs/promises";
+import {translate} from 'google-translate-api-x';
 
 export async function POST(req: { json: () => any; }, res: any) {
     const data = await req.json();
@@ -17,9 +18,11 @@ export async function POST(req: { json: () => any; }, res: any) {
 
     try {
         // Set responseModalities to include "Image" so the model can generate  an image
+        const translation = await translate(prompt, { to: 'en'});
+
         const response = await ai.models.generateContent({
             model: "gemini-2.0-flash-exp-image-generation",
-            contents: "Give an image representation of this idea: \"" + prompt + "\". Please don't put any text on the image. The image will have the style of " + style,
+            contents: "Give an image representation of this idea: \"" + translation.text + "\". The image must not contains any text. The image will have the style of " + style,
             config: {
                 responseModalities: [Modality.TEXT, Modality.IMAGE],
                 // systemInstruction: "The images have the resolution of 800x600 only. Do not generate any text on the image.",
