@@ -107,24 +107,26 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
     setIsSubmitting(true)
     try {
       if (selectedProvider === "facebook") {
-        const response = await axios.post('/api/auth/upload_facebook', {
+        const response = await axios.post('/api/auth/upload_facebook/dashboard', {
           pageId: selectedPage.id,
           pageAccessToken: selectedPage.access_token,
           pageName: selectedPage.name, 
           title: formData.title,
           description: formData.description,
+          filename: selectedVideos
         });
         const data = response.data;
         console.log(data);
         toast.success("Đăng lên Facebook thành công!")
         setOpenShare(false)
       } else if (selectedProvider === "google") {
-        const response = await axios.post('/api/auth/upload_youtube', {
+        const response = await axios.post('/api/auth/upload_youtube/dashboard', {
           channelId: session.googleUserId,
           accessToken: session.googleAccessToken,
           channel: session.user.name,
           title: formData.title,
-          description: formData.description
+          description: formData.description,
+          filename: selectedVideos
         });
         const data = response.data;
         console.log(data);

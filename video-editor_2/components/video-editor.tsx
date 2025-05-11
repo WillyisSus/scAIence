@@ -26,6 +26,7 @@ import { resourceUsage } from "process"
 import { toast, ToastContainer } from "react-toastify"
 import { Menu, Item, Separator, Submenu, useContextMenu } from 'react-contexify';
 import 'react-contexify/ReactContexify.css';
+import { stringify } from "querystring"
 
 interface VideoEditorProps {
   onCancel?: () => void
@@ -94,6 +95,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     trackId: null,
     itemId: null,
   })
+  const [exportInformation, setExportInformation] = useState<string|null> (null)
+  const [exportModal, setShowExportModal] = useState(false);
+
   const [topBarProgress, setTopBarProgress] = useState("")
   const [shareDropdown, setShareDropdown] = useState(true)
   const transitions = [
@@ -265,7 +269,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       item.trim_end = item.trim_start + (item.width)/pxPerSecond
     }
     item.duration = item.trim_end - item.trim_start
-    if (display_item.id === item.id) loadDataContent({...item})
+    // if (display_item.id === item.id) 
+    loadDataContent({...item})
     if (item.id.indexOf(trackName.first_track) != -1){
         const replaceIndex = subtitleTrackResources.findIndex((element) => item.id === element.id)
         setSubtitleTrackResources((subtitleTrackResources)=>{
@@ -605,6 +610,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   }
 
   const saveProjectAndShowPreview = async ()=>{
+    setOutputURL("")
       await saveProjectProperties().then()
       // let totalFirstTrack = 0;
       // let totalThirdTrack = 0;
@@ -684,7 +690,15 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   const loadDataContent = (resource_item) => {
     setDisplayItem(resource_item)
   }
-
+  const showExportModal = () => {
+    setShowExportModal(true)
+  }
+  const handleConfirmExport = async () => {
+    if (!exportInformation || exportInformation.trim().length === 0) toast.error("Xin hãy điền tên video")
+    if (exportInformation || exportInformation.trim() === "output_video") toast.error("Vui lòng không đặt tên là output_video")
+    await onExportVideo().then()
+    setShowExportModal(false)
+  }
   const onExportVideo = async () => {
     await saveProjectProperties().then()
     // let totalFirstTrack = 0;
@@ -699,7 +713,6 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     // }
 
     setTopBarProgress("Đang xuất bản...")
-    await saveProjectProperties()
     try {
       let resX = 1920
       let resY = 1080
@@ -727,18 +740,21 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           resY: resY,
           sampleRate: sampleRate,
           crf: crf,
-          preset: preset
+          preset: preset,
+          outputURL: `${exportInformation}.mp4`
         })
       })
       if (response.ok){
         const returnPackage = await response.json();
         console.log(returnPackage.output);
         setOutputURL(returnPackage.output);
+        toast.success("Xuất bản thành công")
       }
-      setTopBarProgress("Xuất bản thành công.")
+      setTopBarProgress("")
       setShareDropdown(true)
     } catch (error) {
-      setTopBarProgress("Xuất bản thất bại.")
+      setTopBarProgress("")
+      toast.error("Xuất bản thất bại")
     }
   }
 
@@ -818,6 +834,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           pageName: selectedPage.name, 
           title: formData.title,
           description: formData.description,
+          filename: `${exportInformation}.mp4`
         });
         const data = response.data;
         console.log(data);
@@ -828,7 +845,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           accessToken: session.googleAccessToken,
           channel: session.user.name,
           title: formData.title,
-          description: formData.description
+          description: formData.description,
+          filename: `${exportInformation}.mp4`
         });
         const data = response.data;
         console.log(data);
@@ -937,6 +955,41 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
               </DropdownMenuContent>
             </DropdownMenu>
         )}
+        <Dialog open={exportModal} onOpenChange={setShowExportModal}>
+          <DialogContent className="[&>button.absolute.top-4.right-4]:hidden"
+                         onInteractOutside={(e) => e.preventDefault()}
+                         onEscapeKeyDown={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle>Xuất video {selectedPage?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {dialogError && <p className="text-sm text-red-500">{dialogError}</p>}
+              <h2 className="font-bold">Tên Video</h2>
+              <input 
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                  type="text"
+                  placeholder="Tiêu đề"
+                  value={exportInformation?exportInformation:""}
+                  onChange={(e) => setExportInformation(e.target.value)}/>
+              <p className="text-sm text-red-600">Đặt trên trùng với video đã xuất bản trong thư mục "exports" của dự án sẽ ghi đè video. Vui lòng cẩn trọng.</p>
+              <h2 className="font-bold">Chất lượng</h2>
+              <select  onChange={event => {
+              setOutputQuality(parseInt(event.target.value))
+              }} value={outputQuality} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-black focus:border-black block w-full p-2.5
+              dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 hover:cursor-pointer">
+                <option value={1}>Thấp</option>
+                <option value={2}>Trung bình</option>
+                <option value={3}>Cao</option>
+              </select>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleConfirmExport} disabled={isSubmitting}>Xác nhận</Button>
+              <DialogClose asChild>
+                <Button variant="ghost" disabled={isSubmitting}>Hủy</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="[&>button.absolute.top-4.right-4]:hidden"
                          onInteractOutside={(e) => e.preventDefault()}
@@ -977,16 +1030,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectAndShowPreview}>
             Xem trước <PlayIcon className="h-4 w-4"/>
           </Button>
-          <Button variant="outline" className="flex btn-dark items-center gap-2">
-            <select onChange={event => {
-              setOutputQuality(parseInt(event.target.value))
-            }} value={outputQuality} className="bg-white">
-              <option value={1}>Thấp</option>
-              <option value={2}>Trung bình</option>
-              <option value={3}>Cao</option>
-            </select>
-          </Button>
-          <Button variant="outline" className="flex items-center gap-2" onClick={onExportVideo}>
+          
+          <Button variant="outline" className="flex items-center gap-2" onClick={showExportModal}>
             Xuất bản <ArrowRightFromLine className="h-4 w-4"/>
           </Button>
 
@@ -1033,8 +1078,13 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         {/* Video player */}
         <div className="border-r p-4">
           <h2 className="font-medium text-lg mb-4">Trình phát</h2>
-          <div className="flex flex-col items-center justify-center h-full]">
-            <ReactPlayer url={outputURL} width="100%" controls={true}/>
+          <div className="flex flex-col items-center justify-center rounded-lg border border-black h-[80%]">
+            {outputURL.length === 0 ?  (
+              <img src={"video_place_holder.png"} alt="Ảnh Placeholder (Nay I doth triumph)" className="w-[80%]" />
+            ) : (
+              <ReactPlayer url={outputURL} height="auto" width="80%" controls={true}/>
+            ) }
+
             {/* <canvas className="bg-gray-500 w-full"/>
             <div className="flex justify-between items-center">
               <div className="flex gap-2">
@@ -1081,6 +1131,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             ) :
               display_item.type == "audio" ? (
               <div className="h-full w-full flex flex-col gap-2">
+                <div><span className="font-bold">Tài nguyên: </span>{display_item.name}</div>
                 <div><span className="font-bold">Bắt đầu tại: </span>{display_item.trim_start} s</div>
                 <div><span className="font-bold">Kết thúc tại: </span>{display_item.trim_end} s</div>
                 <AudioPlayer className="w-full" src={display_item.source} onPlay={(e) => {
@@ -1090,8 +1141,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
               </div>
               ) :
               <div className="h-full w-full flex flex-col gap-2">
+                <div><span className="font-bold">Tài nguyên: </span>{display_item.name}</div>
                 <img src={display_item.source} alt={"Image"} className="w-52 max-w-56 self-center border border-black rounded-lg p-1 "/>
-                <div><span className="font-bold">Xuất hiện: </span>{display_item.duration} s</div>
+                <div><span className="font-bold">Xuất hiện: </span>{(Math.round(display_item.duration * 100) / 100).toFixed(2)} s</div>
                 <div className="w-full flex flex-col gap-1"><span className="font-bold">Hiệu ứng chuyển cảnh: </span>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -1124,40 +1176,15 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       {/* Timeline */}
       <div className="flex flex-row">
         {/* Timeline toolbar and left panel*/}
-        <div id="toolbar-leftpanel" className="flex flex-col">
-          <div className="flex items-center border-b p-2 gap-4">
-            <Scissors className="h-5 w-5" />
-            <div className="border-r h-6 mx-2"></div>
-            <Button variant="ghost" size="icon">
-              <RotateCcw className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <RotateCw className="h-5 w-5" />
-            </Button>
+        <div id="toolbar-leftpanel" className="flex flex-col min-w-96">
+          <div className="flex justify-center h-8 items-center border-r bg-white border-b p-2 gap-4 font-bold">
+            Thời gian <i className="pi pi-images"></i>
           </div>
-          <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
-            <div className="flex items-center gap-2">
-                      <span className="text-xl">T</span>
-                      <Eye className="h-5 w-5" />
-                    </div>
+          <div className="flex justify-center items-center h-24 relative bg-white w-full border-r  font-bold border-b p-2 gap-4">
+            Hình ảnh <i className="pi pi-clock"></i>
           </div>
-          <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
-            <div className="flex items-center gap-2">
-                      <span className="text-xl"></span>
-                      <Eye className="h-5 w-5" />
-                    </div>
-          </div>
-          <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
-            <div className="flex items-center gap-2">
-                      <span className="text-xl"></span>
-                      <Eye className="h-5 w-5" />
-                    </div>
-          </div>
-          <div className="w-60 border-r p-2 flex items-center justify-center flex-shrink-0">
-            <div className="flex items-center gap-2">
-                      <span className="text-xl"></span>
-                      <Eye className="h-5 w-5" />
-                    </div>
+          <div className="flex justify-center items-center h-24 relative bg-white w-full border-r font-bold border-b p-2 gap-4">
+            Âm thanh <i className="pi pi-volume-up"></i>
           </div>
         </div>
 
@@ -1171,7 +1198,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             {/* <div className="w-60 border-r flex-shrink-0"></div> */}
             <div className="flex min-w-[800px]">
               {Array.from({ length: totalAudioDuration }).map((_, i) => (
-                <div key={i} className="w-[16px] min-w-[16px] small flex items-center justify-center border-r text-sm py-2">
+                <div key={i} className="w-[16px] h-8 min-w-[16px] small flex items-center justify-center border-r border-b text-sm py-2">
                   {(i) % 10 == 0 ? i  : ""}
                 </div>
               ))}
