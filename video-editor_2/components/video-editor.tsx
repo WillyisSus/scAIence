@@ -791,8 +791,15 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     setShowExportModal(true)
   }
   const handleConfirmExport = async () => {
-    if (!exportInformation || exportInformation.trim().length === 0) toast.error("Xin hãy điền tên video")
-    if (exportInformation || exportInformation.trim() === "output_video") toast.error("Vui lòng không đặt tên là output_video")
+    if (!exportInformation || exportInformation.trim().length === 0)
+      { 
+        toast.error("Xin hãy điền tên video") 
+        return
+      }
+    if (exportInformation && exportInformation.trim() === "output_video"){
+       toast.error("Vui lòng không đặt tên là output_video")
+        return
+      }
     await onExportVideo().then()
   }
   const onExportVideo = async () => {

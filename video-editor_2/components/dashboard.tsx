@@ -55,6 +55,8 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
   const [formData, setFormData] = useState({ title: "", description: "" })
   const [selectedPageDropdownText, setSelectedPageDropdownText] = useState("")
   const [dashboardVideoModal, setDashboardVideoModal] = useState("")
+  const [justUploaded, setJustUploaded] = useState<number>(0)
+  const [justDeletedProject, setJustDeletedProject] = useState<number>(0)
   const MENU_ID = "project-context-menu"
   function formatSmartLocalDateTime(timestamp: number): string {
     const date = new Date(timestamp);
@@ -140,6 +142,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
     }
     setFormData({ title: "", description: "" })
     setIsSubmitting(false)
+    setJustUploaded(Date.now())
     setSelectedProvider("")
   }
   const handleConfirm = async () => {
@@ -157,6 +160,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
       toast.success("Đã xóa dự án")
       const data = await response.json();
       setProjectList(JSON.parse(data.output))
+      setJustDeletedProject(Date.now())
     }else{
       toast.error("Không thể xóa dự án")
     }
@@ -248,7 +252,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
       }
     }
     getAllExportedVideos().then()
-  }, [])
+  }, [justDeletedProject])
 
   useEffect(() => {
     const getAllExportedVideos = async () => {
@@ -266,7 +270,7 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
       }
     }
     getAllExportedVideos().then()
-  }, [])
+  }, [justUploaded])
   // User signin-signout and session management
   useEffect(() => {
     const handler = async (event: MessageEvent) => {
@@ -634,10 +638,10 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
           (<div className="py-8 flex flex-col items-center justify-center">
             <span className="text-xl font-bold text-center">Đăng nhập vào nền tảng tương ứng để xem video đã đăng tải</span>
             <div className="flex flex-row items-center justify-center min-w-[60%] w-[80%] py-2 gap-2">
-              <button onClick={() => userSignIn("facebook")}  className="btn min-w-40 w-fit h-10 rounded-l rounded px-2  flex flex-row
+              <button onClick={() => userSignIn("facebook")} disabled={isSubmitting} className="btn min-w-40 w-fit h-10 rounded-l rounded px-2  flex flex-row
               text-white bg-blue-600 border-2 border-blue-600 hover:bg-white hover:text-blue-600 transition-colors
               text-center items-center justify-between">Đăng nhập Facebook <i className=" px-2 pi text-xl pi-facebook"/></button>
-              <button onClick={() => userSignIn("google")} className="btn min-w-40 w-fit h-10 rounded-l rounded px-2  flex flex-row
+              <button onClick={() => userSignIn("google")} disabled={isSubmitting} className="btn min-w-40 w-fit h-10 rounded-l rounded px-2  flex flex-row
               text-white bg-red-600 border-2 border-red-600 hover:bg-white hover:text-red-600 transition-colors
               text-center items-center justify-between">Đăng nhập Youtube <i className=" px-2 pi text-xl pi-youtube"/></button>
             </div>
