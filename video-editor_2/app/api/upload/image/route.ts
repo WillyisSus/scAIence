@@ -25,6 +25,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
         message: 'Image saved successfully',
-        image_path: path.join(resourceLocation, fileName)
+        image_path: resourceLocation + "/" + fileName
     });
 }

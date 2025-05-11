@@ -25,6 +25,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
         message: 'Audio saved successfully', 
-        audio_path: path.join(resourceLocation, fileName)
+        audio_path: resourceLocation + "/" + fileName
     });
 }

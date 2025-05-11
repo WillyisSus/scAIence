@@ -271,7 +271,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
       item.trim_end = item.trim_start + (item.width)/pxPerSecond
     }
     item.duration = item.trim_end - item.trim_start
-    // if (display_item.id === item.id) 
+    // if (display_item.id === item.id)
     loadDataContent({...item})
     if (item.id.indexOf(trackName.first_track) != -1){
         const replaceIndex = subtitleTrackResources.findIndex((element) => item.id === element.id)
@@ -701,7 +701,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         if (new_image_response.ok) {
             const result = await new_image_response.json();
             const custom_url = result.image_path;
-            
+
             // Update resources
             const newResourceItem = {
               id: Date.now(),
@@ -730,13 +730,13 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           }else{
             toast.success("Không thể thêm tài nguyên")
           }
-      
+
         }else{
             toast.error("Không thể thêm tài nguyên")
             return
         }
     }else if (uploadedItem.type.startsWith("audio")){
-        
+
         const new_audio_response = await fetch('/api/video_editor/add_resource/audio', {
             method: 'POST',
             body: formData,
@@ -774,7 +774,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           }else{
             toast.success("Không thể thêm tài nguyên")
           }
-      
+
         }else{
             toast.error("Không thể thêm tài nguyên")
             return
@@ -792,8 +792,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
   }
   const handleConfirmExport = async () => {
     if (!exportInformation || exportInformation.trim().length === 0)
-      { 
-        toast.error("Xin hãy điền tên video") 
+      {
+        toast.error("Xin hãy điền tên video")
         return
       }
     if (exportInformation && exportInformation.trim() === "output_video"){
@@ -1069,7 +1069,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
             <div className="space-y-4 py-4">
               {dialogError && <p className="text-sm text-red-500">{dialogError}</p>}
               <h2 className="font-bold">Tên Video</h2>
-              <input 
+              <input
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                   type="text"
                   placeholder="Tiêu đề"
@@ -1134,7 +1134,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
           <Button variant="outline" className="flex btn-dark items-center gap-2" onClick={saveProjectAndShowPreview}>
             Xem trước <PlayIcon className="h-4 w-4"/>
           </Button>
-          
+
           <Button variant="outline" className="flex items-center gap-2" onClick={showExportModal}>
             Xuất bản <ArrowRightFromLine className="h-4 w-4"/>
           </Button>
@@ -1367,7 +1367,7 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
                   <AudioPlayer src={URL.createObjectURL(uploadedItem)} className="w-96"></AudioPlayer>
                 )
             )}
-     
+
           </div>
           <DialogFooter>
             <DialogClose asChild>

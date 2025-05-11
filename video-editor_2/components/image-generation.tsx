@@ -93,7 +93,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                 resource_array.push({
                     id: id,
                     name: `image_${id}`,
-                    source: e.image_url,
+                    source: e.custom_image_url || e.image_url,
                     original_duration: e.audio_duration,
                     type: "image"
                 });
@@ -108,7 +108,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                 resource_array.push({
                     id: id,
                     name: `sound_${id - 2}`,
-                    source: e.audio_url,
+                    source: e.custom_audio_url || e.audio_url,
                     original_duration: e.audio_duration,
                     type: "audio"
                 });
@@ -343,7 +343,7 @@ export default function ImageGeneration({ onConfirmImages, onBackToContentCreati
                                                 className="bg-red-600 text-white p-2 "
                                                 onClick={() => deleteCustomAssets(asset.asset_id)}
                                             >
-                                                Xóa tài nguyên
+                                                Loại bỏ chỉnh sửa
                                             </Button>
                                         </div>
                                     </div>

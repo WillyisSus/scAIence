@@ -358,45 +358,6 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
     setSelectedProvider("google")
     setSelectedPageDropdownText(page)
   }
-  // const videos = [
-  //   {
-  //     id: "vid1",
-  //     name: "vid1",
-  //     thumbnail: "/placeholder.svg?height=50&width=100",
-  //     status: "Đã xuất bản",
-  //     date: "10 ngày trước",
-  //   },
-  //   {
-  //     id: "vid2",
-  //     name: "vid2",
-  //     thumbnail: "/placeholder.svg?height=50&width=100",
-  //     status: "Đang xử lí",
-  //     date: "10 ngày trước",
-  //   },
-  //   {
-  //     id: "vid3",
-  //     name: "vid3",
-  //     thumbnail: "/placeholder.svg?height=50&width=100",
-  //     status: "Đang xử lí",
-  //     date: "8 ngày trước",
-  //   },
-  // ]
-
-  // const toggleSelectVideo = (videoId: string) => {
-  //   if (selectedVideos.includes(videoId)) {
-  //     setSelectedVideos(selectedVideos.filter((id) => id !== videoId))
-  //   } else {
-  //     setSelectedVideos([...selectedVideos, videoId])
-  //   }
-  // }
-  //
-  // const toggleSelectAll = () => {
-  //   if (selectedVideos.length === videos.length) {
-  //     setSelectedVideos([])
-  //   } else {
-  //     setSelectedVideos(videos.map((video) => video.id))
-  //   }
-  // }
 
   const initProject = async () => {
     if (projectList.findIndex((el) => el.project_name === projectNameValue) != -1){
@@ -569,13 +530,6 @@ export default function Dashboard({ onCreateVideo, onGoToProject }: DashboardPro
                     {project.project_name}
                   </div>
                 </td>
-                {/* <td className="p-4" >
-                  <img
-                    src={"/placeholder.svg"}
-                    alt={project}
-                    className="w-24 h-12 object-cover rounded"
-                  />
-                </td> */}
                 <td className="p-4">{statusList[project.status]}</td>
                 <td className="p-4">{formatSmartLocalDateTime(project.date_created)}</td>
               </tr>

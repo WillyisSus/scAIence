@@ -516,15 +516,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
 
             <div className="flex justify-end gap-4 mt-auto">
               <span className="text-center justify-self-center content-center">{progress}</span>
-              <Button hidden={true} variant="outline" className="px-6" onClick={async () => {
-                // if (scriptOutput.length === 0) {
-                //   toast.error("Khu vực kịch bản đang trống!")
-                //   return;
-                // }
-                // await onGenerateVideo();
-              }}>
-                Tạo video AI
-              </Button>
+
               <Button className="bg-black text-white px-6" onClick={
                 async () => {
                   if (scriptOutput.length === 0) {

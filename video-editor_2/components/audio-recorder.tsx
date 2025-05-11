@@ -48,14 +48,14 @@ export default function AudioRecorder({ onRecordingComplete }: AudioRecorderProp
                         className="bg-blue-600 text-white px-4 py-2 rounded"
                         onClick={() => setIsRecording(true)}
                     >
-                        Start Recording
+                        Bắt đầu ghi âm
                     </button>
                 ) : (
                     <button
                         className="bg-red-600 text-white px-4 py-2 rounded"
                         onClick={handleStop}
                     >
-                        Stop Recording
+                        Hoàn tất ghi âm
                     </button>
                 )}
             </div>
