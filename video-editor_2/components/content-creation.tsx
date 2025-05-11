@@ -329,7 +329,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
                     <div className="w-full">
                       <input
                           type="text"
-                          placeholder="Nhập từ khóa bạn muốn (tối đa 20 từ)..."
+                          placeholder="Nhập mô tả của bạn..."
                           className="w-full p-2 border rounded"
                           id="my-prompt"
                           value={scriptInput}
@@ -357,7 +357,7 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
 
                         : scriptInputType == "link" ? <div className="w-full">
                           <input
-                              type="text"
+                              type="url"
                               placeholder="Nhập đường dẫn"
                               className="w-full p-2 border rounded"
                               id="my-prompt-link"
@@ -407,40 +407,9 @@ export default function ContentCreation({ onApproveAndCreate, onCancel, onContin
           <Button id="prompt-button" className="w-full bg-black text-white" onClick={onGenerateContent}>Tạo kịch
             bản</Button>
 
-          <h2 className="text-xl font-bold my-6">Tùy chỉnh âm thanh</h2>
-
-          <div className="mb-6">
-            <label className="block mb-2 font-medium">Ngôn ngữ</label>
-            <div className="flex gap-4 items-center">
-              <div className="relative w-full">
-                <select className="w-full p-2 border rounded appearance-none pr-10"
-                        onChange={event => setVoiceLanguage(event.target.value)}>
-                  <option value={"en"}>Tiếng Anh</option>
-                  <option value={"vi"}>Tiếng Việt</option>
-                  <option value={"jp"}>Tiếng Nhật</option>
-                  <option value={"cn"}>Tiếng Trung</option>
-                  <option value={"kr"}>Tiếng Hàn</option>
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />
-              </div>
-              {/*<div className="relative w-full">*/}
-              {/*  <select className="w-full p-2 border rounded appearance-none pr-10">*/}
-              {/*    <option>Nam, người lớn</option>*/}
-              {/*    <option>Nữ, người lớn</option>*/}
-              {/*  </select>*/}
-              {/*  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none" />*/}
-              {/*</div>*/}
-              {/*<Button variant="ghost" className="flex items-center gap-1">*/}
-              {/*  <Plus className="h-4 w-4" />*/}
-              {/*  Thêm giọng nói*/}
-              {/*</Button>*/}
-            </div>
-          </div>
-
           <h2 className="text-xl font-bold my-6">Tùy chỉnh hình ảnh</h2>
 
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="gap-4 mb-6">
             <div>
               <label className="block mb-2 font-medium">Phong cách</label>
               <div className="relative w-full">

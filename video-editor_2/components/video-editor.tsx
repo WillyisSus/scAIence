@@ -815,7 +815,9 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
     //   return
     // }
 
-    setTopBarProgress("Đang xuất bản...")
+    // setTopBarProgress("Đang xuất bản...")
+    toast.error("Đang xuất bản video...");
+
     try {
       let resX = 1920
       let resY = 1080
@@ -854,10 +856,8 @@ export default function VideoEditor({ onCancel }: VideoEditorProps) {
         toast.success("Xuất bản thành công")
         setShowExportModal(false)
       }
-      setTopBarProgress("")
       setShareDropdown(true)
     } catch (error) {
-      setTopBarProgress("")
       toast.error("Xuất bản thất bại")
     }
   }
