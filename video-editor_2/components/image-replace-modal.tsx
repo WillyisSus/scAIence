@@ -12,11 +12,13 @@ interface ImageReplaceProps {
     showImageModal: boolean
     setShowImageModal: (showImageModal: boolean) => void
     selectedAssetId: number | null
+    setAssetsUpdateStatus: (status: number) => void
+    setToastMessage: (message: string) => void
     setAssets: (assets: ImageItem[]) => void
     assets: ImageItem[]
 }
 
-export default function ImageReplaceModal({ showImageModal, setShowImageModal, selectedAssetId, setAssets, assets }: ImageReplaceProps) {
+export default function ImageReplaceModal({ showImageModal, setShowImageModal, selectedAssetId, setAssetsUpdateStatus, setToastMessage, setAssets, assets }: ImageReplaceProps) {
     const [uploadedImage, setUploadedImage] = useState<Blob | null>(null)
 
     const handleSaveImage = async () => {
@@ -32,7 +34,10 @@ export default function ImageReplaceModal({ showImageModal, setShowImageModal, s
             body: formData,
         });
 
-        if (!new_image_response.ok) return;
+        if (!new_image_response.ok) {
+            setAssetsUpdateStatus(-1)
+            return;
+        }
 
         const result = await new_image_response.json();
         const custom_url = result.image_path;
@@ -54,7 +59,9 @@ export default function ImageReplaceModal({ showImageModal, setShowImageModal, s
             })
         })
 
+        setToastMessage("Thay đổi hình ảnh thành công.")
         setAssets(updatedAssets)
+        setAssetsUpdateStatus(1)
         setShowImageModal(false)
         setUploadedImage(null)
     }
