@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-// Construct the request
-import { speak } from 'google-translate-api-x';
+import { speak, translate } from 'google-translate-api-x';
 import { writeFileSync } from 'fs';
 import fsPromises from "fs/promises";
-import { Drum } from "lucide-react";
 const ffmpeg = require('fluent-ffmpeg')
-const fs = require(('fs'))
+
 function getDurationFromURL(url) {
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(url, (err, metadata) => {
@@ -17,6 +15,7 @@ function getDurationFromURL(url) {
         });
     });
 }
+
 export async function POST(req: { json: () => any; }, res: any) {
     const data = await req.json();
     const prompt = data.prompt_data;
@@ -28,7 +27,10 @@ export async function POST(req: { json: () => any; }, res: any) {
     const project_name = appdatajson.current_project;
 
     try {
-        const res = await speak(prompt, { to: language });
+        const translation = await translate(prompt, { to: language});
+        const speakLanguage = translation.from.language.iso;
+        
+        const res = await speak(prompt, { to: speakLanguage });
         const buffer = Buffer.from(res.toString(), 'base64')
 
         writeFileSync(`public/${project_name}/sounds/generated_voice_${index}.mp3`, buffer, { encoding: 'base64' })
